@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detachProp, hotspotOccupant, initialPlacements, placeProp } from './configurator'
+import { hotspotOccupant, initialPlacements, placeProp } from './configurator'
 
 describe('configurator placement rules', () => {
   it('starts props on the approved hotspots', () => {
@@ -20,11 +20,5 @@ describe('configurator placement rules', () => {
     const next = placeProp(initialPlacements, 'potion-stats', 'secret-academy-bottom')
     expect(next).toBe(initialPlacements)
     expect(next['potion-stats']).toBe('ancient-stone-left')
-  })
-
-  it('detaches a prop into the shared tray without changing other props', () => {
-    const next = detachProp(initialPlacements, 'character-class')
-    expect(next['character-class']).toBeNull()
-    expect(next['character-status']).toBe('secret-academy-bottom')
   })
 })

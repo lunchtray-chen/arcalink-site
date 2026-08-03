@@ -120,14 +120,24 @@ export function ArtifactModel({ artworkUrl, videoTexture, rotationY = 0 }: Artif
   )
 }
 
-function SplashScene({ keyboardYaw, reducedMotion }: { keyboardYaw: number; reducedMotion: boolean }) {
+function SplashScene({
+  keyboardYaw,
+  reducedMotion,
+  interacted,
+  onInteraction,
+}: {
+  keyboardYaw: number
+  reducedMotion: boolean
+  interacted: boolean
+  onInteraction: () => void
+}) {
   const projectionTexture = useProjectionTexture(reducedMotion)
   return (
     <>
       <ambientLight intensity={1.6} />
       <directionalLight position={[3, 5, 5]} intensity={3.2} />
       <directionalLight position={[-4, -2, 3]} intensity={1.1} color="#ff902e" />
-      <group scale={1.62} rotation={[-0.12, 0.38, -0.08]}>
+      <group scale={1.32} rotation={[0, -0.38, -0.1]} position={[0, -0.08, 0]}>
         <ArtifactModel videoTexture={projectionTexture} rotationY={keyboardYaw} />
       </group>
       <OrbitControls
@@ -135,10 +145,14 @@ function SplashScene({ keyboardYaw, reducedMotion }: { keyboardYaw: number; redu
         enablePan={false}
         enableZoom={false}
         enableDamping={!reducedMotion}
-        dampingFactor={0.075}
-        minPolarAngle={Math.PI / 2 - 0.32}
-        maxPolarAngle={Math.PI / 2 + 0.32}
-        rotateSpeed={0.72}
+        dampingFactor={0.055}
+        autoRotate={!interacted && !reducedMotion}
+        autoRotateSpeed={0.48}
+        onStart={onInteraction}
+        target={[0, -0.12, 0]}
+        minPolarAngle={Math.PI / 2 - 0.62}
+        maxPolarAngle={Math.PI / 2 + 0.48}
+        rotateSpeed={0.84}
       />
     </>
   )
@@ -149,6 +163,7 @@ export function SplashViewer() {
   const visualTest = useVisualTestMode()
   const reducedMotion = prefersReducedMotion || visualTest
   const [keyboardYaw, setKeyboardYaw] = useState(0)
+  const [interacted, setInteracted] = useState(false)
 
   return (
     <div
@@ -159,6 +174,7 @@ export function SplashViewer() {
       onKeyDown={(event) => {
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
           event.preventDefault()
+          setInteracted(true)
           setKeyboardYaw((yaw) => yaw + (event.key === 'ArrowLeft' ? -0.12 : 0.12))
         }
       }}
@@ -166,13 +182,17 @@ export function SplashViewer() {
       <Suspense fallback={<LoadingModel />}>
         <Canvas
           dpr={[1, 1.75]}
-          camera={{ position: [0, 0, 5], fov: 35 }}
+          camera={{ position: [0, 0.72, 5.4], fov: 35 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         >
-          <SplashScene keyboardYaw={keyboardYaw} reducedMotion={reducedMotion} />
+          <SplashScene
+            keyboardYaw={keyboardYaw}
+            reducedMotion={reducedMotion}
+            interacted={interacted}
+            onInteraction={() => setInteracted(true)}
+          />
         </Canvas>
       </Suspense>
-      <span className="drag-hint" aria-hidden="true">Drag to rotate</span>
     </div>
   )
 }

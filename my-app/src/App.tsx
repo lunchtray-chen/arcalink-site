@@ -1,14 +1,11 @@
 import { Component, lazy, Suspense, useEffect, useMemo, useState, type ErrorInfo, type ReactNode } from 'react'
 import './App.css'
-import { detachProp, hotspotOccupant, initialPlacements, placeProp } from './configurator'
+import { hotspotOccupant, initialPlacements, placeProp } from './configurator'
 import { faqs, models, props, reviews, slides } from './content'
 import { useDocumentVisible, useMediaQuery, useVisualTestMode } from './hooks'
-import type { HotspotId, HotspotSide, PropId } from './types'
+import type { HotspotId, PropId } from './types'
 
 import logo from './assets/logo.svg'
-import splashDecoration1 from './assets/images/Splash page - BG decoration image 1.png'
-import splashDecoration2 from './assets/images/Splash page - BG decoration image 2.png'
-import splashDecoration3 from './assets/images/Splash page - BG decoration image 3.png'
 import whatBackground from './assets/images/What is it - BG image.png'
 import animationBackground from './assets/images/Animation BG Image.png'
 import profilePicture from './assets/images/Placeholder Profile Picture.png'
@@ -32,8 +29,6 @@ import casingIcon from './assets/Icons/specs - casing icon.png'
 
 const SplashViewer = lazy(() => import('./components/Artifact3D').then((module) => ({ default: module.SplashViewer })))
 const CustomizeCanvas = lazy(() => import('./components/Customize3D').then((module) => ({ default: module.CustomizeCanvas })))
-
-const hotspotSides: HotspotSide[] = ['top', 'right', 'bottom', 'left']
 
 class ModelErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
@@ -120,9 +115,6 @@ function Header() {
 function SplashSection() {
   return (
     <section className="splash-section" aria-labelledby="splash-title">
-      <img className="splash-decoration splash-decoration--one" src={splashDecoration1} alt="" />
-      <img className="splash-decoration splash-decoration--two" src={splashDecoration2} alt="" />
-      <img className="splash-decoration splash-decoration--three" src={splashDecoration3} alt="" />
       <div className="splash-glow" />
       <div className="section-container splash-layout">
         <div className="splash-copy">
@@ -180,7 +172,6 @@ function CustomizeSection() {
   const mobile = useMediaQuery('(max-width: 767px)')
   const [activeIndex, setActiveIndex] = useState(0)
   const [placements, setPlacements] = useState(initialPlacements)
-  const [selectedProp, setSelectedProp] = useState<PropId | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const activeModel = models[activeIndex]
 
@@ -193,7 +184,6 @@ function CustomizeSection() {
     setPlacements((current) => placeProp(current, propId, hotspotId))
     const prop = props.find((item) => item.id === propId)!
     setAnnouncement(`${prop.label} attached to ${hotspotId.replaceAll('-', ' ')}.`)
-    setSelectedProp(null)
     return true
   }
 
@@ -237,53 +227,7 @@ function CustomizeSection() {
       )}
 
       <div className="prop-controls section-container">
-        <p className="prop-instructions">Drag and drop props to rearrange, or use the controls below.</p>
-        <details className="accessible-prop-controls">
-          <summary>Keyboard prop controls</summary>
-          <div className="prop-toolbar" aria-label="Accessible prop controls">
-          {props.map((prop) => {
-            const placement = placements[prop.id]
-            const modelId = placement?.replace(/-(top|right|bottom|left)$/, '')
-            return (
-              <div className="prop-control" key={prop.id}>
-                <button
-                  type="button"
-                  className={selectedProp === prop.id ? 'is-selected' : ''}
-                  onClick={() => setSelectedProp(prop.id)}
-                >
-                  {prop.label}
-                </button>
-                <small>{placement ? `On ${models.find((model) => model.id === modelId)?.label}` : 'In tray'}</small>
-                {placement && (
-                  <button
-                    type="button"
-                    className="detach-button"
-                    onClick={() => {
-                      setPlacements((current) => detachProp(current, prop.id))
-                      setAnnouncement(`${prop.label} moved to the shared tray.`)
-                    }}
-                  >Detach</button>
-                )}
-              </div>
-            )
-          })}
-          </div>
-          {selectedProp && (
-            <div className="hotspot-toolbar" aria-label="Choose a magnetic hotspot">
-            <span>Place on {mobile ? activeModel.label : 'model'}:</span>
-            {visibleModels.map((model) => hotspotSides.map((side) => {
-              const id = `${model.id}-${side}` as HotspotId
-              const occupied = hotspotOccupant(placements, id)
-              return (
-                <button key={id} type="button" disabled={Boolean(occupied && occupied !== selectedProp)} onClick={() => handlePlace(selectedProp, id)}>
-                  {mobile ? side : `${model.label} ${side}`}
-                </button>
-              )
-            }))}
-            <button type="button" onClick={() => setSelectedProp(null)}>Cancel</button>
-            </div>
-          )}
-        </details>
+        <p className="prop-instructions">Drag and drop props to rearrange.</p>
       </div>
       <p className="sr-only" aria-live="polite">{announcement}</p>
     </section>

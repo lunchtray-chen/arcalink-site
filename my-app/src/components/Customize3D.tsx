@@ -47,6 +47,8 @@ function PropMesh({
   const gltf = useGLTF(config.modelUrl)
   const object = useMemo(() => gltf.scene.clone(true), [gltf.scene])
   const [dragPosition, setDragPosition] = useState<THREE.Vector3 | null>(null)
+  const dragging = useRef(false)
+  const latestPoint = useRef<THREE.Vector3 | null>(null)
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.74), [])
   const intersection = useRef(new THREE.Vector3())
 
@@ -61,29 +63,38 @@ function PropMesh({
       scale={propId === 'potion-stats' ? 0.48 : 0.42}
       onPointerDown={(event) => {
         event.stopPropagation()
-        const target = event.nativeEvent.target
-        if (target instanceof Element && 'setPointerCapture' in target) {
-          target.setPointerCapture(event.pointerId)
-        }
-        setDragPosition(projectPointer(event))
+        const target = event.target as unknown as { setPointerCapture: (pointerId: number) => void }
+        target.setPointerCapture(event.pointerId)
+        dragging.current = true
+        const point = projectPointer(event)
+        latestPoint.current = point
+        setDragPosition(point)
       }}
       onPointerMove={(event) => {
-        if (!dragPosition) return
+        if (!dragging.current) return
         event.stopPropagation()
         const point = projectPointer(event)
-        if (point) setDragPosition(point)
+        if (point) {
+          latestPoint.current = point
+          setDragPosition(point)
+        }
       }}
       onPointerUp={(event) => {
-        if (!dragPosition) return
+        if (!dragging.current) return
         event.stopPropagation()
-        const target = event.nativeEvent.target
-        if (target instanceof Element && 'releasePointerCapture' in target) {
-          target.releasePointerCapture(event.pointerId)
-        }
-        onDrop(propId, dragPosition)
+        const target = event.target as unknown as { releasePointerCapture: (pointerId: number) => void }
+        target.releasePointerCapture(event.pointerId)
+        const point = projectPointer(event) ?? latestPoint.current
+        if (point) onDrop(propId, point)
+        dragging.current = false
+        latestPoint.current = null
         setDragPosition(null)
       }}
-      onPointerCancel={() => setDragPosition(null)}
+      onPointerCancel={() => {
+        dragging.current = false
+        latestPoint.current = null
+        setDragPosition(null)
+      }}
     >
       <primitive object={object} />
     </group>
@@ -134,9 +145,13 @@ function CustomizeScene({ placements, activeModel, onPlace }: CustomizeSceneProp
         )
       })}
       {hotspots.map((hotspot) => (
-        <mesh key={hotspot.id} position={hotspot.position}>
-          <planeGeometry args={[0.34, 0.18]} />
-          <meshBasicMaterial color="#ff5e67" transparent opacity={0.92} depthTest={false} />
+        <mesh
+          key={hotspot.id}
+          position={[hotspot.position[0], hotspot.position[1], hotspot.position[2] - 0.08]}
+          renderOrder={-1}
+        >
+          <planeGeometry args={[0.16, 0.1]} />
+          <meshBasicMaterial color="#ff5e67" transparent opacity={0.72} />
         </mesh>
       ))}
       {props.map((prop) => {

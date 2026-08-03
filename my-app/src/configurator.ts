@@ -19,7 +19,3 @@ export function placeProp(
   if (occupant && occupant !== propId) return placements
   return { ...placements, [propId]: hotspotId }
 }
-
-export function detachProp(placements: PropPlacement, propId: PropId): PropPlacement {
-  return { ...placements, [propId]: null }
-}
