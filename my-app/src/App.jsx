@@ -5,6 +5,8 @@ function App() {
 
   return (
     <>
+    <p> test hi</p>
+    <h1>hiiiii</h1>
     </>
   )
 }
