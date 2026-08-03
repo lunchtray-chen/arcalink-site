@@ -1,0 +1,180 @@
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { Edges, OrbitControls, useGLTF, useProgress, useTexture } from '@react-three/drei'
+import * as THREE from 'three'
+import type { Mesh } from 'three'
+import { artifactModelUrl } from '../content'
+import { useMediaQuery, useVisualTestMode } from '../hooks'
+
+const projectionUrl = '/Splash - Projected Animation on 3D model.mp4'
+
+type ModelNodes = {
+  Cube: Mesh
+  壳1: Mesh
+  壳2: Mesh
+}
+
+function LoadingModel() {
+  const { progress } = useProgress()
+  return <div className="model-loader" role="status">Loading model {Math.round(progress)}%</div>
+}
+
+function useProjectionTexture(reducedMotion: boolean) {
+  const [texture, setTexture] = useState<THREE.VideoTexture | null>(null)
+
+  useEffect(() => {
+    const video = document.createElement('video')
+    video.src = projectionUrl
+    video.crossOrigin = 'anonymous'
+    video.loop = true
+    video.muted = true
+    video.playsInline = true
+    video.preload = 'auto'
+
+    const nextTexture = new THREE.VideoTexture(video)
+    nextTexture.colorSpace = THREE.SRGBColorSpace
+    nextTexture.minFilter = THREE.LinearFilter
+    nextTexture.magFilter = THREE.LinearFilter
+    setTexture(nextTexture)
+
+    const prepare = () => {
+      if (reducedMotion) {
+        video.currentTime = 0
+        video.pause()
+      } else {
+        void video.play().catch(() => undefined)
+      }
+    }
+    video.addEventListener('canplay', prepare)
+    prepare()
+
+    return () => {
+      video.removeEventListener('canplay', prepare)
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+      nextTexture.dispose()
+    }
+  }, [reducedMotion])
+
+  return texture
+}
+
+interface ArtifactModelProps {
+  artworkUrl?: string
+  videoTexture?: THREE.VideoTexture | null
+  rotationY?: number
+}
+
+function ArtworkPlanes({ texture, screen }: { texture: THREE.Texture; screen: { box: THREE.Box3; size: THREE.Vector3; center: THREE.Vector3 } }) {
+  texture.colorSpace = THREE.SRGBColorSpace
+  return (
+    <>
+      <mesh position={[screen.center.x, screen.center.y, screen.box.max.z + 0.006]}>
+        <planeGeometry args={[screen.size.x * 0.94, screen.size.y * 0.94]} />
+        <meshBasicMaterial map={texture} toneMapped={false} />
+      </mesh>
+      <mesh position={[screen.center.x, screen.center.y, screen.box.min.z - 0.006]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[screen.size.x * 0.94, screen.size.y * 0.94]} />
+        <meshBasicMaterial map={texture} toneMapped={false} />
+      </mesh>
+    </>
+  )
+}
+
+function ArtworkScreens({ artworkUrl, screen }: { artworkUrl: string; screen: { box: THREE.Box3; size: THREE.Vector3; center: THREE.Vector3 } }) {
+  const texture = useTexture(artworkUrl)
+  return <ArtworkPlanes texture={texture} screen={screen} />
+}
+
+export function ArtifactModel({ artworkUrl, videoTexture, rotationY = 0 }: ArtifactModelProps) {
+  const gltf = useGLTF(artifactModelUrl)
+  const nodes = gltf.nodes as unknown as ModelNodes
+
+  const screen = useMemo(() => {
+    nodes.Cube.geometry.computeBoundingBox()
+    const box = nodes.Cube.geometry.boundingBox!
+    const size = new THREE.Vector3()
+    const center = new THREE.Vector3()
+    box.getSize(size)
+    box.getCenter(center)
+    return { box, size, center }
+  }, [nodes.Cube.geometry])
+
+  return (
+    <group rotation={[0, rotationY, 0]} dispose={null}>
+      <mesh geometry={nodes['壳1'].geometry} castShadow receiveShadow>
+        <meshStandardMaterial color="#a58f8c" roughness={0.76} metalness={0.04} />
+        {!artworkUrl && <Edges color="#fff7f0" threshold={34} />}
+      </mesh>
+      <mesh geometry={nodes['壳2'].geometry} castShadow receiveShadow>
+        <meshStandardMaterial color="#907b7a" roughness={0.8} metalness={0.03} />
+        {!artworkUrl && <Edges color="#fff7f0" threshold={34} />}
+      </mesh>
+      <mesh geometry={nodes.Cube.geometry}>
+        <meshStandardMaterial color="#171414" roughness={0.62} />
+      </mesh>
+      {videoTexture && <ArtworkPlanes texture={videoTexture} screen={screen} />}
+      {artworkUrl && <ArtworkScreens artworkUrl={artworkUrl} screen={screen} />}
+    </group>
+  )
+}
+
+function SplashScene({ keyboardYaw, reducedMotion }: { keyboardYaw: number; reducedMotion: boolean }) {
+  const projectionTexture = useProjectionTexture(reducedMotion)
+  return (
+    <>
+      <ambientLight intensity={1.6} />
+      <directionalLight position={[3, 5, 5]} intensity={3.2} />
+      <directionalLight position={[-4, -2, 3]} intensity={1.1} color="#ff902e" />
+      <group scale={1.62} rotation={[-0.12, 0.38, -0.08]}>
+        <ArtifactModel videoTexture={projectionTexture} rotationY={keyboardYaw} />
+      </group>
+      <OrbitControls
+        makeDefault
+        enablePan={false}
+        enableZoom={false}
+        enableDamping={!reducedMotion}
+        dampingFactor={0.075}
+        minPolarAngle={Math.PI / 2 - 0.32}
+        maxPolarAngle={Math.PI / 2 + 0.32}
+        rotateSpeed={0.72}
+      />
+    </>
+  )
+}
+
+export function SplashViewer() {
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const visualTest = useVisualTestMode()
+  const reducedMotion = prefersReducedMotion || visualTest
+  const [keyboardYaw, setKeyboardYaw] = useState(0)
+
+  return (
+    <div
+      className="splash-viewer"
+      role="application"
+      aria-label="Interactive Artifact Mini model. Drag to rotate, or use left and right arrow keys."
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault()
+          setKeyboardYaw((yaw) => yaw + (event.key === 'ArrowLeft' ? -0.12 : 0.12))
+        }
+      }}
+    >
+      <Suspense fallback={<LoadingModel />}>
+        <Canvas
+          dpr={[1, 1.75]}
+          camera={{ position: [0, 0, 5], fov: 35 }}
+          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        >
+          <SplashScene keyboardYaw={keyboardYaw} reducedMotion={reducedMotion} />
+        </Canvas>
+      </Suspense>
+      <span className="drag-hint" aria-hidden="true">Drag to rotate</span>
+    </div>
+  )
+}
+
+useGLTF.preload(artifactModelUrl)
