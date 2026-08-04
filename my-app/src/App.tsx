@@ -12,6 +12,7 @@ import profilePicture from './assets/images/Placeholder Profile Picture.png'
 import specsDrawing from './assets/images/Specs - Decorative Side Drawing.png'
 import ctaDrawing from './assets/images/CTA - BG illustration.png'
 import nextImageIcon from './assets/Icons/Next Image Button.png'
+import previousImageIcon from './assets/Icons/Next Image Button (Left).png'
 import downArrow from './assets/Icons/Downward arrow.png'
 import upArrow from './assets/Icons/Upward arrow.png'
 import discordIcon from './assets/Icons/Discord icon.png'
@@ -113,9 +114,9 @@ function Header() {
 }
 
 function SplashSection() {
+  const mobile = useMediaQuery('(max-width: 767px)')
   return (
     <section className="splash-section" aria-labelledby="splash-title">
-      <div className="splash-glow" />
       <div className="section-container splash-layout">
         <div className="splash-copy">
           <p className="eyebrow">Where Tabletop Meets Technology</p>
@@ -125,11 +126,13 @@ function SplashSection() {
           </p>
           <InertAction className="primary-button">Preorder Now!</InertAction>
         </div>
-        <ModelErrorBoundary>
-          <Suspense fallback={<div className="model-loader">Loading interactive model…</div>}>
-            <SplashViewer />
-          </Suspense>
-        </ModelErrorBoundary>
+        {!mobile && (
+          <ModelErrorBoundary>
+            <Suspense fallback={<div className="model-loader">Loading interactive model…</div>}>
+              <SplashViewer />
+            </Suspense>
+          </ModelErrorBoundary>
+        )}
       </div>
       <button
         className="scroll-cue"
@@ -199,37 +202,45 @@ function CustomizeSection() {
       <div className="customize-stage">
         <ModelErrorBoundary>
           <Suspense fallback={<div className="model-loader">Loading customizer…</div>}>
-            <CustomizeCanvas placements={placements} activeModel={mobile ? activeModel.id : null} onPlace={handlePlace} />
+            <CustomizeCanvas placements={placements} activeModel={mobile ? activeModel.id : null} interactive={!mobile} onPlace={handlePlace} />
           </Suspense>
         </ModelErrorBoundary>
         <div className="model-labels" aria-hidden="true">
           {visibleModels.map((model) => <span key={model.id}>{model.label}</span>)}
         </div>
+        {mobile && (
+          <div className="casing-arrows" aria-label="Choose a casing">
+            <button type="button" onClick={() => setActiveIndex((activeIndex + models.length - 1) % models.length)} aria-label="Previous casing">
+              <img src={previousImageIcon} alt="" />
+            </button>
+            <button type="button" onClick={() => setActiveIndex((activeIndex + 1) % models.length)} aria-label="Next casing">
+              <img src={nextImageIcon} alt="" />
+            </button>
+          </div>
+        )}
       </div>
 
       {mobile && (
-        <div className="carousel-controls" aria-label="Choose a casing">
-          <button type="button" onClick={() => setActiveIndex((activeIndex + models.length - 1) % models.length)} aria-label="Previous casing">‹</button>
-          <div className="carousel-dots">
-            {models.map((model, index) => (
-              <button
-                key={model.id}
-                type="button"
-                className={index === activeIndex ? 'is-active' : ''}
-                aria-label={`Show ${model.label}`}
-                aria-current={index === activeIndex}
-                onClick={() => setActiveIndex(index)}
-              />
-            ))}
-          </div>
-          <button type="button" onClick={() => setActiveIndex((activeIndex + 1) % models.length)} aria-label="Next casing">›</button>
+        <div className="carousel-dots casing-dots" aria-label="Choose a casing">
+          {models.map((model, index) => (
+            <button
+              key={model.id}
+              type="button"
+              className={index === activeIndex ? 'is-active' : ''}
+              aria-label={`Show ${model.label}`}
+              aria-current={index === activeIndex}
+              onClick={() => setActiveIndex(index)}
+            />
+          ))}
         </div>
       )}
 
-      <div className="prop-controls section-container">
-        <p className="prop-instructions">Drag and drop props to rearrange.</p>
-      </div>
-      <p className="sr-only" aria-live="polite">{announcement}</p>
+      {!mobile && (
+        <div className="prop-controls section-container">
+          <p className="prop-instructions">Drag and drop props to rearrange.</p>
+        </div>
+      )}
+      {!mobile && <p className="sr-only" aria-live="polite">{announcement}</p>}
     </section>
   )
 }
@@ -243,7 +254,7 @@ function AppSlideshow() {
 
   useEffect(() => {
     if (paused || !visible || reducedMotion || visualTest) return
-    const timer = window.setInterval(() => setActive((current) => (current + 1) % slides.length), 5000)
+    const timer = window.setInterval(() => setActive((current) => (current + 1) % slides.length), 3500)
     return () => window.clearInterval(timer)
   }, [paused, reducedMotion, visible, visualTest])
 
@@ -259,9 +270,16 @@ function AppSlideshow() {
     >
       <div className="slide-frame" aria-live="polite">
         {slides.map((slide, index) => (
-          <img key={slide.src} className={index === active ? 'is-active' : ''} src={slide.src} alt={index === active ? slide.alt : ''} loading={index ? 'lazy' : 'eager'} />
+          <img
+            key={slide.src}
+            className={`slide-image ${index === active ? 'is-active' : ''}`}
+            src={slide.src}
+            alt={index === active ? slide.alt : ''}
+            loading="eager"
+            decoding="async"
+          />
         ))}
-        <button type="button" className="next-slide" onClick={() => setActive((active + 1) % slides.length)} aria-label="Next image">
+        <button type="button" className="next-slide" onClick={() => setActive((current) => (current + 1) % slides.length)} aria-label="Next image">
           <img src={nextImageIcon} alt="" />
         </button>
       </div>
@@ -337,7 +355,7 @@ function SpecsSection() {
 }
 
 function FaqSection() {
-  const [open, setOpen] = useState<Set<string>>(() => new Set(['comparison']))
+  const [open, setOpen] = useState<Set<string>>(() => new Set())
   return (
     <section className="faq-section" aria-labelledby="faq-title">
       <div className="faq-inner">

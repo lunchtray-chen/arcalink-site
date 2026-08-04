@@ -35,10 +35,12 @@ function visibleHotspots(activeModel: ModelId | null): Hotspot[] {
 function PropMesh({
   propId,
   position,
+  interactive,
   onDrop,
 }: {
   propId: PropId
   position: readonly [number, number, number]
+  interactive: boolean
   onDrop: (propId: PropId, point: THREE.Vector3) => void
 }) {
   const config = props.find((prop) => prop.id === propId)!
@@ -59,7 +61,7 @@ function PropMesh({
     <group
       position={dragPosition ? [dragPosition.x, dragPosition.y, 0.78] : position}
       scale={propId === 'potion-stats' ? 0.48 : 0.42}
-      onPointerDown={(event) => {
+      onPointerDown={interactive ? (event) => {
         event.stopPropagation()
         const target = event.target as unknown as { setPointerCapture: (pointerId: number) => void }
         target.setPointerCapture(event.pointerId)
@@ -67,8 +69,8 @@ function PropMesh({
         const point = projectPointer(event)
         latestPoint.current = point
         setDragPosition(point)
-      }}
-      onPointerMove={(event) => {
+      } : undefined}
+      onPointerMove={interactive ? (event) => {
         if (!dragging.current) return
         event.stopPropagation()
         const point = projectPointer(event)
@@ -76,8 +78,8 @@ function PropMesh({
           latestPoint.current = point
           setDragPosition(point)
         }
-      }}
-      onPointerUp={(event) => {
+      } : undefined}
+      onPointerUp={interactive ? (event) => {
         if (!dragging.current) return
         event.stopPropagation()
         const target = event.target as unknown as { releasePointerCapture: (pointerId: number) => void }
@@ -87,12 +89,12 @@ function PropMesh({
         dragging.current = false
         latestPoint.current = null
         setDragPosition(null)
-      }}
-      onPointerCancel={() => {
+      } : undefined}
+      onPointerCancel={interactive ? () => {
         dragging.current = false
         latestPoint.current = null
         setDragPosition(null)
-      }}
+      } : undefined}
     >
       <primitive object={object} />
     </group>
@@ -102,10 +104,11 @@ function PropMesh({
 interface CustomizeSceneProps {
   placements: PropPlacement
   activeModel: ModelId | null
+  interactive: boolean
   onPlace: (propId: PropId, hotspotId: HotspotId) => boolean
 }
 
-function CustomizeScene({ placements, activeModel, onPlace }: CustomizeSceneProps) {
+function CustomizeScene({ placements, activeModel, interactive, onPlace }: CustomizeSceneProps) {
   const hotspots = visibleHotspots(activeModel)
   const trayIds = props.filter((prop) => placements[prop.id] === null).map((prop) => prop.id)
 
@@ -155,13 +158,13 @@ function CustomizeScene({ placements, activeModel, onPlace }: CustomizeSceneProp
       {props.map((prop) => {
         const placement = placements[prop.id]
         if (activeModel && placement && !placement.startsWith(activeModel)) return null
-        return <PropMesh key={prop.id} propId={prop.id} position={positions[prop.id]} onDrop={handleDrop} />
+        return <PropMesh key={prop.id} propId={prop.id} position={positions[prop.id]} interactive={interactive} onDrop={handleDrop} />
       })}
     </>
   )
 }
 
-export function CustomizeCanvas({ placements, activeModel, onPlace }: CustomizeSceneProps) {
+export function CustomizeCanvas({ placements, activeModel, interactive, onPlace }: CustomizeSceneProps) {
   return (
     <div className="customize-canvas" aria-hidden="true">
       <Suspense fallback={<div className="model-loader">Loading customizer…</div>}>
@@ -171,7 +174,7 @@ export function CustomizeCanvas({ placements, activeModel, onPlace }: CustomizeS
           camera={{ position: [0, 0, 10], zoom: activeModel ? 115 : 140 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         >
-          <CustomizeScene placements={placements} activeModel={activeModel} onPlace={onPlace} />
+          <CustomizeScene placements={placements} activeModel={activeModel} interactive={interactive} onPlace={onPlace} />
         </Canvas>
       </Suspense>
     </div>
