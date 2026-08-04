@@ -5,7 +5,7 @@ import appSlide4 from './assets/images/App - Placeholder Image 4.png'
 import customizeArtwork from './assets/images/Customize - Unique Artwork Placeholder.png'
 import type { FaqItem, ModelConfig, PropConfig, Review, Slide } from './types'
 
-export const artifactModelUrl = '/Splash Page Rotatable 3D Model.glb'
+export const artifactModelUrl = '/Customize 3D Model - Academy.glb'
 
 export const models: ModelConfig[] = [
   { id: 'ancient-stone', label: 'Ancient Stone', modelUrl: '/Customize 3D Model - Stone.glb', artworkUrl: customizeArtwork },

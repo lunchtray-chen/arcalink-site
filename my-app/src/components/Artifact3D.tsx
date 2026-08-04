@@ -7,7 +7,6 @@ import { artifactModelUrl } from '../content'
 import { useMediaQuery, useVisualTestMode } from '../hooks'
 
 const projectionUrl = '/Splash - Projected Animation on 3D model.mp4'
-const splashModelUrl = '/Customize 3D Model - Wanted.glb'
 
 type ModelNodes = {
   Cube: Mesh
@@ -204,7 +203,7 @@ function SplashScene({
     <>
       <SplashLights />
       <group scale={1.32} rotation={[0, -0.38, -0.1]} position={[0, -0.08, 0]}>
-        <ArtifactModel modelUrl={splashModelUrl} videoTexture={projectionTexture} rotationY={keyboardYaw} />
+        <ArtifactModel videoTexture={projectionTexture} rotationY={keyboardYaw} />
       </group>
       <OrbitControls
         makeDefault
@@ -282,4 +281,3 @@ export function SplashViewer() {
 }
 
 useGLTF.preload(artifactModelUrl)
-useGLTF.preload(splashModelUrl)
