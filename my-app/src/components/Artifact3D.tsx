@@ -1,5 +1,5 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { Edges, OrbitControls, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Mesh } from 'three'
@@ -7,6 +7,7 @@ import { artifactModelUrl } from '../content'
 import { useMediaQuery, useVisualTestMode } from '../hooks'
 
 const projectionUrl = '/Splash - Projected Animation on 3D model.mp4'
+const splashModelUrl = '/Customize 3D Model - Wanted.glb'
 
 type ModelNodes = {
   Cube: Mesh
@@ -17,6 +18,28 @@ type ModelNodes = {
 function LoadingModel() {
   const { progress } = useProgress()
   return <div className="model-loader" role="status">Loading model {Math.round(progress)}%</div>
+}
+
+function SplashLights() {
+  const rig = useRef<THREE.Group>(null)
+
+  useFrame(({ camera }) => {
+    if (!rig.current) return
+    rig.current.position.copy(camera.position)
+    rig.current.quaternion.copy(camera.quaternion)
+  })
+
+  return (
+    <>
+      <ambientLight intensity={2.1} />
+      <group ref={rig}>
+        <directionalLight position={[3, 4.28, -0.4]} intensity={4} />
+        <directionalLight position={[-4, -2.72, -2.4]} intensity={1.1} color="#ff902e" />
+        <directionalLight position={[-3, 1.28, -9.4]} intensity={2.2} color="#4d8dff" />
+        <directionalLight position={[3, 1.28, -9.4]} intensity={2.2} color="#4d8dff" />
+      </group>
+    </>
+  )
 }
 
 function useProjectionTexture(video: HTMLVideoElement | null, paused: boolean) {
@@ -179,11 +202,9 @@ function SplashScene({
   const projectionTexture = useProjectionTexture(projectionVideo, freezeProjection)
   return (
     <>
-      <ambientLight intensity={1.6} />
-      <directionalLight position={[3, 5, 5]} intensity={3.2} />
-      <directionalLight position={[-4, -2, 3]} intensity={1.1} color="#ff902e" />
+      <SplashLights />
       <group scale={1.32} rotation={[0, -0.38, -0.1]} position={[0, -0.08, 0]}>
-        <ArtifactModel videoTexture={projectionTexture} rotationY={keyboardYaw} />
+        <ArtifactModel modelUrl={splashModelUrl} videoTexture={projectionTexture} rotationY={keyboardYaw} />
       </group>
       <OrbitControls
         makeDefault
@@ -261,3 +282,4 @@ export function SplashViewer() {
 }
 
 useGLTF.preload(artifactModelUrl)
+useGLTF.preload(splashModelUrl)
