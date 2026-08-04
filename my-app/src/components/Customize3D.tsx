@@ -141,7 +141,7 @@ function CustomizeScene({ placements, activeModel, interactive, onPlace }: Custo
         const x = activeModel ? 0 : modelX[model.id]
         return (
           <group key={model.id} position={[x, 0, 0]} scale={1.3}>
-            <ArtifactModel artworkUrl={model.artworkUrl} />
+            <ArtifactModel artworkUrl={model.artworkUrl} modelUrl={model.modelUrl} />
           </group>
         )
       })}

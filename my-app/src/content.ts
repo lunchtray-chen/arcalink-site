@@ -10,7 +10,7 @@ export const artifactModelUrl = '/Splash Page Rotatable 3D Model.glb'
 export const models: ModelConfig[] = [
   { id: 'ancient-stone', label: 'Ancient Stone', modelUrl: artifactModelUrl, artworkUrl: customizeArtwork },
   { id: 'secret-academy', label: 'Secret Academy', modelUrl: artifactModelUrl, artworkUrl: customizeArtwork },
-  { id: 'wanted', label: 'Wanted: Dead or Alive', modelUrl: artifactModelUrl, artworkUrl: customizeArtwork },
+  { id: 'wanted', label: 'Wanted: Dead or Alive', modelUrl: '/Customize 3D Model - Wanted.glb', artworkUrl: customizeArtwork },
   { id: 'noble-palace', label: 'Noble Palace', modelUrl: artifactModelUrl, artworkUrl: customizeArtwork },
 ]
 

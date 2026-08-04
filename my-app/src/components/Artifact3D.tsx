@@ -93,6 +93,7 @@ function useProjectionTexture(video: HTMLVideoElement | null, paused: boolean) {
 
 interface ArtifactModelProps {
   artworkUrl?: string
+  modelUrl?: string
   videoTexture?: THREE.VideoTexture | null
   rotationY?: number
 }
@@ -118,9 +119,13 @@ function ArtworkScreens({ artworkUrl, screen }: { artworkUrl: string; screen: { 
   return <ArtworkPlanes texture={texture} screen={screen} />
 }
 
-export function ArtifactModel({ artworkUrl, videoTexture, rotationY = 0 }: ArtifactModelProps) {
-  const gltf = useGLTF(artifactModelUrl)
+export function ArtifactModel({ artworkUrl, modelUrl = artifactModelUrl, videoTexture, rotationY = 0 }: ArtifactModelProps) {
+  const gltf = useGLTF(modelUrl)
   const nodes = gltf.nodes as unknown as ModelNodes
+
+  const additionalMeshes = useMemo(() => Object.entries(gltf.nodes)
+    .filter(([name, node]) => !['Cube', '壳1', '壳2'].includes(name) && node instanceof THREE.Mesh)
+    .map(([name, node]) => ({ name, object: node.clone() })), [gltf.nodes])
 
   const screen = useMemo(() => {
     nodes.Cube.geometry.computeBoundingBox()
@@ -134,17 +139,22 @@ export function ArtifactModel({ artworkUrl, videoTexture, rotationY = 0 }: Artif
 
   return (
     <group rotation={[0, rotationY, 0]} dispose={null}>
-      <mesh geometry={nodes['壳1'].geometry} castShadow receiveShadow>
-        <meshStandardMaterial color="#a58f8c" roughness={0.76} metalness={0.04} />
-        {!artworkUrl && <Edges color="#fff7f0" threshold={34} />}
-      </mesh>
-      <mesh geometry={nodes['壳2'].geometry} castShadow receiveShadow>
-        <meshStandardMaterial color="#907b7a" roughness={0.8} metalness={0.03} />
-        {!artworkUrl && <Edges color="#fff7f0" threshold={34} />}
-      </mesh>
+      {additionalMeshes.length === 0 && (
+        <>
+          <mesh geometry={nodes['壳1'].geometry} castShadow receiveShadow>
+            <meshStandardMaterial color="#a58f8c" roughness={0.76} metalness={0.04} />
+            {!artworkUrl && <Edges color="#fff7f0" threshold={34} />}
+          </mesh>
+          <mesh geometry={nodes['壳2'].geometry} castShadow receiveShadow>
+            <meshStandardMaterial color="#907b7a" roughness={0.8} metalness={0.03} />
+            {!artworkUrl && <Edges color="#fff7f0" threshold={34} />}
+          </mesh>
+        </>
+      )}
       <mesh geometry={nodes.Cube.geometry}>
         <meshStandardMaterial color="#171414" roughness={0.62} />
       </mesh>
+      {additionalMeshes.map(({ name, object }) => <primitive key={name} object={object} />)}
       {videoTexture && <ArtworkPlanes texture={videoTexture} screen={screen} />}
       {artworkUrl && <ArtworkScreens artworkUrl={artworkUrl} screen={screen} />}
     </group>
