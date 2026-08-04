@@ -286,8 +286,8 @@ p {
 .customize-section {
   min-height: min(calc(100vw * 0.688), 920px);
   padding: 84px 0 24px;
-  color: var(--ink);
-  background: var(--bg-secondary);
+  color: #fff;
+  background: var(--bg-primary);
 }
 
 .customize-heading {
@@ -351,8 +351,8 @@ p {
   min-height: min(calc(100vw * 0.527), 788px);
   display: flex;
   align-items: center;
-  color: var(--ink);
-  background: var(--bg-secondary);
+  color: #fff;
+  background: var(--bg-primary);
   border-bottom: 48px solid var(--bg-primary);
 }
 

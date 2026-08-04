@@ -134,8 +134,11 @@ function CustomizeScene({ placements, activeModel, interactive, onPlace }: Custo
 
   return (
     <>
-      <ambientLight intensity={2.2} />
-      <directionalLight position={[3, 5, 7]} intensity={3.1} />
+      <ambientLight intensity={2.1} />
+      <directionalLight position={[3, 5, 7]} intensity={4} />
+      <directionalLight position={[-4, -2, 3]} intensity={1.1} color="#ff902e" />
+      <directionalLight position={[-3, 2, -4]} intensity={2.2} color="#4d8dff" />
+      <directionalLight position={[3, 2, -4]} intensity={2.2} color="#4d8dff" />
       {models.map((model) => {
         if (activeModel && model.id !== activeModel) return null
         const x = activeModel ? 0 : modelX[model.id]
