@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Edges, OrbitControls, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
@@ -19,43 +19,74 @@ function LoadingModel() {
   return <div className="model-loader" role="status">Loading model {Math.round(progress)}%</div>
 }
 
-function useProjectionTexture(reducedMotion: boolean) {
-  const [texture, setTexture] = useState<THREE.VideoTexture | null>(null)
+function useProjectionTexture(video: HTMLVideoElement | null, paused: boolean) {
+  const [readyVideo, setReadyVideo] = useState<HTMLVideoElement | null>(null)
 
   useEffect(() => {
-    const video = document.createElement('video')
-    video.src = projectionUrl
-    video.crossOrigin = 'anonymous'
-    video.loop = true
-    video.muted = true
-    video.playsInline = true
-    video.preload = 'auto'
+    if (!video) {
+      setReadyVideo(null)
+      return
+    }
 
+    const markReady = () => setReadyVideo(video)
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) markReady()
+    video.addEventListener('loadeddata', markReady)
+    return () => video.removeEventListener('loadeddata', markReady)
+  }, [video])
+
+  const texture = useMemo(() => {
+    if (!video || readyVideo !== video) return null
     const nextTexture = new THREE.VideoTexture(video)
     nextTexture.colorSpace = THREE.SRGBColorSpace
     nextTexture.minFilter = THREE.LinearFilter
     nextTexture.magFilter = THREE.LinearFilter
-    setTexture(nextTexture)
+    nextTexture.needsUpdate = true
+    return nextTexture
+  }, [readyVideo, video])
 
-    const prepare = () => {
-      if (reducedMotion) {
-        video.currentTime = 0
-        video.pause()
-      } else {
-        void video.play().catch(() => undefined)
-      }
+  useEffect(() => () => texture?.dispose(), [texture])
+
+  useEffect(() => {
+    if (!video || !texture) return
+    video.pause()
+    let frameRequest = 0
+    let timelineOrigin = performance.now() - video.currentTime * 1000
+
+    const refreshFrame = () => {
+      texture.needsUpdate = true
     }
-    video.addEventListener('canplay', prepare)
-    prepare()
+
+    const advanceProjection = (now: number) => {
+      const duration = video.duration
+      if (paused) {
+        if (video.currentTime !== 0 && !video.seeking) video.currentTime = 0
+      } else if (
+        document.visibilityState === 'visible'
+        && Number.isFinite(duration)
+        && duration > 0
+        && !video.seeking
+      ) {
+        const nextTime = ((now - timelineOrigin) / 1000) % duration
+        if (Math.abs(nextTime - video.currentTime) >= 1 / 30) video.currentTime = nextTime
+      }
+      frameRequest = window.requestAnimationFrame(advanceProjection)
+    }
+
+    const resetTimeline = () => {
+      timelineOrigin = performance.now() - video.currentTime * 1000
+    }
+
+    video.addEventListener('seeked', refreshFrame)
+    document.addEventListener('visibilitychange', resetTimeline)
+    frameRequest = window.requestAnimationFrame(advanceProjection)
 
     return () => {
-      video.removeEventListener('canplay', prepare)
+      window.cancelAnimationFrame(frameRequest)
+      video.removeEventListener('seeked', refreshFrame)
+      document.removeEventListener('visibilitychange', resetTimeline)
       video.pause()
-      video.removeAttribute('src')
-      video.load()
-      nextTexture.dispose()
     }
-  }, [reducedMotion])
+  }, [paused, texture, video])
 
   return texture
 }
@@ -123,15 +154,19 @@ export function ArtifactModel({ artworkUrl, videoTexture, rotationY = 0 }: Artif
 function SplashScene({
   keyboardYaw,
   reducedMotion,
+  freezeProjection,
+  projectionVideo,
   interacted,
   onInteraction,
 }: {
   keyboardYaw: number
   reducedMotion: boolean
+  freezeProjection: boolean
+  projectionVideo: HTMLVideoElement | null
   interacted: boolean
   onInteraction: () => void
 }) {
-  const projectionTexture = useProjectionTexture(reducedMotion)
+  const projectionTexture = useProjectionTexture(projectionVideo, freezeProjection)
   return (
     <>
       <ambientLight intensity={1.6} />
@@ -164,6 +199,8 @@ export function SplashViewer() {
   const reducedMotion = prefersReducedMotion || visualTest
   const [keyboardYaw, setKeyboardYaw] = useState(0)
   const [interacted, setInteracted] = useState(false)
+  const [projectionVideo, setProjectionVideo] = useState<HTMLVideoElement | null>(null)
+  const projectionRef = useCallback((video: HTMLVideoElement | null) => setProjectionVideo(video), [])
 
   return (
     <div
@@ -179,6 +216,20 @@ export function SplashViewer() {
         }
       }}
     >
+      <video
+        ref={projectionRef}
+        className="projection-video-source"
+        src={projectionUrl}
+        muted
+        loop
+        playsInline
+        preload="auto"
+        crossOrigin="anonymous"
+        disablePictureInPicture
+        data-artifact-projection="true"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <Suspense fallback={<LoadingModel />}>
         <Canvas
           dpr={[1, 1.75]}
@@ -188,6 +239,8 @@ export function SplashViewer() {
           <SplashScene
             keyboardYaw={keyboardYaw}
             reducedMotion={reducedMotion}
+            freezeProjection={visualTest}
+            projectionVideo={projectionVideo}
             interacted={interacted}
             onInteraction={() => setInteracted(true)}
           />

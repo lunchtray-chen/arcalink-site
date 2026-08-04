@@ -8,6 +8,21 @@ test('renders every landing-page section without horizontal overflow', async ({ 
   expect(overflow).toBeLessThanOrEqual(1)
 })
 
+test('starts the splash projection without user interaction', async ({ page }) => {
+  await page.goto('/')
+  const projection = page.locator('video[data-artifact-projection="true"]')
+  await expect(projection).toHaveCount(1, { timeout: 15_000 })
+  await expect.poll(
+    () => projection.evaluate((video: HTMLVideoElement) => video.paused && video.currentTime > 0.05),
+    { timeout: 15_000 },
+  ).toBe(true)
+  const firstTime = await projection.evaluate((video: HTMLVideoElement) => video.currentTime)
+  await expect.poll(
+    () => projection.evaluate((video: HTMLVideoElement, previousTime) => Math.abs(video.currentTime - previousTime), firstTime),
+    { timeout: 5_000 },
+  ).toBeGreaterThan(0.01)
+})
+
 test('mobile menu and configurator carousel are usable', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.startsWith('mobile'))
   await page.goto('/')

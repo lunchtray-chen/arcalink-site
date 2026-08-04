@@ -171,6 +171,15 @@ p {
   touch-action: none;
 }
 
+.projection-video-source {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  pointer-events: none;
+}
+
 .splash-viewer:active {
   cursor: grabbing;
 }
@@ -334,7 +343,7 @@ p {
 .prop-controls {
   position: relative;
   z-index: 5;
-  margin-top: -18px;
+  margin-top: 24px;
 }
 
 .prop-instructions {

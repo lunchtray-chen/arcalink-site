@@ -15,9 +15,7 @@ const modelX: Record<ModelId, number> = {
 
 const hotspotLocal = {
   top: [0, 1.55, 0.62],
-  right: [0.92, 0.06, 0.62],
-  bottom: [0, -1.57, 0.62],
-  left: [-0.92, 0.06, 0.62],
+  bottom: [0, -0.92, 0.62],
 } as const
 
 function visibleHotspots(activeModel: ModelId | null): Hotspot[] {

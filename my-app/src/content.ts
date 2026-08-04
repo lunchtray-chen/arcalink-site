@@ -19,7 +19,7 @@ export const props: PropConfig[] = [
     id: 'potion-stats',
     label: 'Potion stats',
     modelUrl: '/Customize - Prop placeholder 1.glb',
-    initialHotspot: 'ancient-stone-left',
+    initialHotspot: 'ancient-stone-top',
   },
   {
     id: 'character-status',
