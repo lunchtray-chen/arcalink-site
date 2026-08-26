@@ -58,8 +58,9 @@ export function ModelEnvironment() {
   )
 }
 
-function useProjectionTexture(video: HTMLVideoElement | null, paused: boolean) {
+function useProjectionTexture(video: HTMLVideoElement | null, shouldPlay: boolean) {
   const [readyVideo, setReadyVideo] = useState<HTMLVideoElement | null>(null)
+  const pendingPlay = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
     if (!video) {
@@ -67,10 +68,37 @@ function useProjectionTexture(video: HTMLVideoElement | null, paused: boolean) {
       return
     }
 
-    const markReady = () => setReadyVideo(video)
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) markReady()
-    video.addEventListener('loadeddata', markReady)
-    return () => video.removeEventListener('loadeddata', markReady)
+    let frameCallback = 0
+    let fallbackTimer = 0
+    let waitingForFrame = false
+
+    const markReady = () => {
+      window.clearTimeout(fallbackTimer)
+      setReadyVideo(video)
+    }
+
+    const waitForDecodedFrame = () => {
+      if (waitingForFrame) return
+      waitingForFrame = true
+      if (typeof video.requestVideoFrameCallback === 'function') {
+        frameCallback = video.requestVideoFrameCallback(markReady)
+        fallbackTimer = window.setTimeout(markReady, 500)
+      } else {
+        markReady()
+      }
+    }
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) waitForDecodedFrame()
+    video.addEventListener('loadeddata', waitForDecodedFrame)
+    video.addEventListener('playing', waitForDecodedFrame)
+    return () => {
+      video.removeEventListener('loadeddata', waitForDecodedFrame)
+      video.removeEventListener('playing', waitForDecodedFrame)
+      window.clearTimeout(fallbackTimer)
+      if (frameCallback && typeof video.cancelVideoFrameCallback === 'function') {
+        video.cancelVideoFrameCallback(frameCallback)
+      }
+    }
   }, [video])
 
   const texture = useMemo(() => {
@@ -86,46 +114,92 @@ function useProjectionTexture(video: HTMLVideoElement | null, paused: boolean) {
   useEffect(() => () => texture?.dispose(), [texture])
 
   useEffect(() => {
-    if (!video || !texture) return
-    video.pause()
-    let frameRequest = 0
-    let timelineOrigin = performance.now() - video.currentTime * 1000
+    if (!video) return
 
-    const refreshFrame = () => {
-      texture.needsUpdate = true
+    let disposed = false
+    let retryTimer = 0
+    let retryCount = 0
+
+    video.defaultMuted = true
+    video.muted = true
+    video.loop = true
+    video.playsInline = true
+
+    const clearRetry = () => {
+      window.clearTimeout(retryTimer)
+      retryTimer = 0
     }
 
-    const advanceProjection = (now: number) => {
-      const duration = video.duration
-      if (paused) {
-        if (video.currentTime !== 0 && !video.seeking) video.currentTime = 0
-      } else if (
-        document.visibilityState === 'visible'
-        && Number.isFinite(duration)
-        && duration > 0
-        && !video.seeking
-      ) {
-        const nextTime = ((now - timelineOrigin) / 1000) % duration
-        if (Math.abs(nextTime - video.currentTime) >= 1 / 30) video.currentTime = nextTime
-      }
-      frameRequest = window.requestAnimationFrame(advanceProjection)
+    const ensurePlayback = () => {
+      if (
+        disposed
+        || !shouldPlay
+        || document.visibilityState !== 'visible'
+        || (!video.paused && !video.ended)
+        || pendingPlay.current
+      ) return
+
+      if (video.ended) video.currentTime = 0
+      const attempt = video.play()
+      pendingPlay.current = attempt
+      attempt
+        .then(() => {
+          retryCount = 0
+          clearRetry()
+        })
+        .catch((error: DOMException) => {
+          if (disposed || error.name === 'AbortError' || retryCount >= 3) return
+          retryCount += 1
+          clearRetry()
+          retryTimer = window.setTimeout(ensurePlayback, 750)
+        })
+        .finally(() => {
+          if (pendingPlay.current === attempt) pendingPlay.current = null
+        })
     }
 
-    const resetTimeline = () => {
-      timelineOrigin = performance.now() - video.currentTime * 1000
+    const pausePlayback = () => {
+      clearRetry()
+      if (!video.paused) video.pause()
     }
 
-    video.addEventListener('seeked', refreshFrame)
-    document.addEventListener('visibilitychange', resetTimeline)
-    frameRequest = window.requestAnimationFrame(advanceProjection)
+    const handleVisibility = () => {
+      if (shouldPlay && document.visibilityState === 'visible') ensurePlayback()
+      else pausePlayback()
+    }
+
+    const handlePageShow = () => ensurePlayback()
+    const handleRecoverablePause = () => {
+      if (!shouldPlay || document.visibilityState !== 'visible') return
+      clearRetry()
+      retryTimer = window.setTimeout(ensurePlayback, 100)
+    }
+
+    video.addEventListener('loadeddata', ensurePlayback)
+    video.addEventListener('canplay', ensurePlayback)
+    video.addEventListener('ended', handleRecoverablePause)
+    video.addEventListener('pause', handleRecoverablePause)
+    video.addEventListener('stalled', handleRecoverablePause)
+    window.addEventListener('pageshow', handlePageShow)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    if (shouldPlay && document.visibilityState === 'visible') ensurePlayback()
+    else pausePlayback()
 
     return () => {
-      window.cancelAnimationFrame(frameRequest)
-      video.removeEventListener('seeked', refreshFrame)
-      document.removeEventListener('visibilitychange', resetTimeline)
+      disposed = true
+      clearRetry()
+      pendingPlay.current = null
+      video.removeEventListener('loadeddata', ensurePlayback)
+      video.removeEventListener('canplay', ensurePlayback)
+      video.removeEventListener('ended', handleRecoverablePause)
+      video.removeEventListener('pause', handleRecoverablePause)
+      video.removeEventListener('stalled', handleRecoverablePause)
+      window.removeEventListener('pageshow', handlePageShow)
+      document.removeEventListener('visibilitychange', handleVisibility)
       video.pause()
     }
-  }, [paused, texture, video])
+  }, [shouldPlay, video])
 
   return texture
 }
@@ -209,6 +283,7 @@ function SplashScene({
   keyboardYaw,
   reducedMotion,
   freezeProjection,
+  projectionInViewport,
   projectionVideo,
   interacted,
   onInteraction,
@@ -216,11 +291,15 @@ function SplashScene({
   keyboardYaw: number
   reducedMotion: boolean
   freezeProjection: boolean
+  projectionInViewport: boolean
   projectionVideo: HTMLVideoElement | null
   interacted: boolean
   onInteraction: () => void
 }) {
-  const projectionTexture = useProjectionTexture(projectionVideo, freezeProjection)
+  const projectionTexture = useProjectionTexture(
+    projectionVideo,
+    !freezeProjection && projectionInViewport,
+  )
   return (
     <>
       <ModelEnvironment />
@@ -252,10 +331,23 @@ export function SplashViewer() {
   const [keyboardYaw, setKeyboardYaw] = useState(0)
   const [interacted, setInteracted] = useState(false)
   const [projectionVideo, setProjectionVideo] = useState<HTMLVideoElement | null>(null)
+  const [inViewport, setInViewport] = useState(true)
+  const viewer = useRef<HTMLDivElement>(null)
   const projectionRef = useCallback((video: HTMLVideoElement | null) => setProjectionVideo(video), [])
+
+  useEffect(() => {
+    const element = viewer.current
+    if (!element || !('IntersectionObserver' in window)) return
+    const observer = new IntersectionObserver(([entry]) => {
+      setInViewport(entry.isIntersecting)
+    }, { rootMargin: '120px 0px' })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <div
+      ref={viewer}
       className="splash-viewer"
       role="application"
       aria-label="Interactive Artifact Mini model. Drag to rotate, or use left and right arrow keys."
@@ -272,6 +364,7 @@ export function SplashViewer() {
         ref={projectionRef}
         className="projection-video-source"
         src={projectionUrl}
+        autoPlay
         muted
         loop
         playsInline
@@ -284,6 +377,7 @@ export function SplashViewer() {
       />
       <Suspense fallback={<LoadingModel />}>
         <Canvas
+          frameloop={inViewport ? 'always' : 'never'}
           dpr={[1, 1.75]}
           camera={{ position: [0, 0.72, 5.4], fov: 35 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
@@ -291,7 +385,8 @@ export function SplashViewer() {
           <SplashScene
             keyboardYaw={keyboardYaw}
             reducedMotion={reducedMotion}
-            freezeProjection={visualTest}
+            freezeProjection={reducedMotion}
+            projectionInViewport={inViewport}
             projectionVideo={projectionVideo}
             interacted={interacted}
             onInteraction={() => setInteracted(true)}

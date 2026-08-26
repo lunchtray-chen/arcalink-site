@@ -1,8 +1,8 @@
-import { Component, lazy, Suspense, useEffect, useMemo, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import './App.css'
 import { hotspotOccupant, initialPlacements, placeProp } from './configurator'
 import { faqs, models, props, reviews, slides } from './content'
-import { useDocumentVisible, useMediaQuery, useVisualTestMode } from './hooks'
+import { useDocumentVisible, useHasApproachedViewport, useMediaQuery, useVisualTestMode } from './hooks'
 import type { HotspotId, PropId } from './types'
 
 import logo from './assets/logo.svg'
@@ -173,6 +173,8 @@ function AnimationSection() {
 
 function CustomizeSection() {
   const mobile = useMediaQuery('(max-width: 767px)')
+  const stageRef = useRef<HTMLDivElement>(null)
+  const shouldLoadCanvas = useHasApproachedViewport(stageRef)
   const [activeIndex, setActiveIndex] = useState(0)
   const [placements, setPlacements] = useState(initialPlacements)
   const [announcement, setAnnouncement] = useState('')
@@ -199,12 +201,16 @@ function CustomizeSection() {
         <p>Four handcrafted designs fitted with magnetic hotspots, the Arca 1 is designed to adapt to any character and situation.</p>
       </div>
 
-      <div className="customize-stage">
-        <ModelErrorBoundary>
-          <Suspense fallback={<div className="model-loader">Loading customizer…</div>}>
-            <CustomizeCanvas placements={placements} activeModel={mobile ? activeModel.id : null} interactive={!mobile} onPlace={handlePlace} />
-          </Suspense>
-        </ModelErrorBoundary>
+      <div ref={stageRef} className="customize-stage">
+        {shouldLoadCanvas ? (
+          <ModelErrorBoundary>
+            <Suspense fallback={<div className="model-loader">Loading customizer…</div>}>
+              <CustomizeCanvas placements={placements} activeModel={mobile ? activeModel.id : null} interactive={!mobile} onPlace={handlePlace} />
+            </Suspense>
+          </ModelErrorBoundary>
+        ) : (
+          <div className="model-loader">Loading customizer…</div>
+        )}
         <div className="model-labels" aria-hidden="true">
           {visibleModels.map((model) => <span key={model.id}>{model.label}</span>)}
         </div>

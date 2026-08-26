@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 
 export function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(() =>
@@ -28,6 +28,33 @@ export function useDocumentVisible() {
   }, [])
 
   return visible
+}
+
+export function useHasApproachedViewport(
+  ref: RefObject<Element | null>,
+  rootMargin = '600px 0px',
+) {
+  const [hasApproached, setHasApproached] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    if (!('IntersectionObserver' in window)) {
+      setHasApproached(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      setHasApproached(true)
+      observer.disconnect()
+    }, { rootMargin })
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [ref, rootMargin])
+
+  return hasApproached
 }
 
 export function useVisualTestMode() {
