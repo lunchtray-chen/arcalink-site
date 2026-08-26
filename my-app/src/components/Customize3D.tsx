@@ -1,10 +1,10 @@
 import { Suspense, useMemo, useRef, useState } from 'react'
-import { Canvas, type ThreeEvent } from '@react-three/fiber'
+import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { models, props } from '../content'
-import { ArtifactModel } from './Artifact3D'
-import type { Hotspot, HotspotId, ModelId, PropId, PropPlacement } from '../types'
+import { ArtifactModel, ModelEnvironment } from './Artifact3D'
+import type { Hotspot, HotspotId, HotspotSide, ModelId, PropId, PropPlacement } from '../types'
 
 const modelX: Record<ModelId, number> = {
   'ancient-stone': -3.5,
@@ -14,9 +14,31 @@ const modelX: Record<ModelId, number> = {
 }
 
 const hotspotLocal = {
-  top: [0, 1.55, 0.62],
+  top: [0, 1.3, 0.62],
   bottom: [0, -0.92, 0.62],
+  left: [-0.72, 0.64, 0.62],
+  right: [0.72, 0.64, 0.62],
 } as const
+
+const snapRadius = 0.72
+
+function nearestHotspot(point: THREE.Vector3, hotspots: Hotspot[]) {
+  const nearest = hotspots
+    .map((hotspot) => ({
+      hotspot,
+      distance: point.distanceTo(new THREE.Vector3(...hotspot.position)),
+    }))
+    .sort((a, b) => a.distance - b.distance)[0]
+
+  return nearest && nearest.distance <= snapRadius ? nearest.hotspot : null
+}
+
+function hotspotRotation(side: HotspotSide | null): readonly [number, number, number] {
+  if (side === 'bottom') return [Math.PI / 2, 0, 0]
+  if (side === 'left') return [0, 0, Math.PI / 2]
+  if (side === 'right') return [0, 0, -Math.PI / 2]
+  return [0, 0, 0]
+}
 
 function visibleHotspots(activeModel: ModelId | null): Hotspot[] {
   return models.flatMap((model) => {
@@ -35,11 +57,15 @@ function visibleHotspots(activeModel: ModelId | null): Hotspot[] {
 function PropMesh({
   propId,
   position,
+  placementSide,
+  hotspots,
   interactive,
   onDrop,
 }: {
   propId: PropId
   position: readonly [number, number, number]
+  placementSide: HotspotSide | null
+  hotspots: Hotspot[]
   interactive: boolean
   onDrop: (propId: PropId, point: THREE.Vector3) => void
 }) {
@@ -47,6 +73,8 @@ function PropMesh({
   const gltf = useGLTF(config.modelUrl)
   const object = useMemo(() => gltf.scene.clone(true), [gltf.scene])
   const [dragPosition, setDragPosition] = useState<THREE.Vector3 | null>(null)
+  const [hoveredSide, setHoveredSide] = useState<HotspotSide | null>(null)
+  const group = useRef<THREE.Group>(null)
   const dragging = useRef(false)
   const latestPoint = useRef<THREE.Vector3 | null>(null)
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.74), [])
@@ -57,10 +85,34 @@ function PropMesh({
     return point?.clone() ?? null
   }
 
+  const targetRotation = hotspotRotation(dragPosition ? hoveredSide : placementSide)
+
+  useFrame((_, delta) => {
+    if (!group.current) return
+    group.current.rotation.x = THREE.MathUtils.damp(
+      group.current.rotation.x,
+      targetRotation[0],
+      14,
+      delta,
+    )
+    group.current.rotation.y = THREE.MathUtils.damp(
+      group.current.rotation.y,
+      targetRotation[1],
+      14,
+      delta,
+    )
+    group.current.rotation.z = THREE.MathUtils.damp(
+      group.current.rotation.z,
+      targetRotation[2],
+      14,
+      delta,
+    )
+  })
+
   return (
     <group
+      ref={group}
       position={dragPosition ? [dragPosition.x, dragPosition.y, 0.78] : position}
-      scale={propId === 'potion-stats' ? 0.48 : 0.42}
       onPointerDown={interactive ? (event) => {
         event.stopPropagation()
         const target = event.target as unknown as { setPointerCapture: (pointerId: number) => void }
@@ -69,6 +121,7 @@ function PropMesh({
         const point = projectPointer(event)
         latestPoint.current = point
         setDragPosition(point)
+        setHoveredSide(point ? nearestHotspot(point, hotspots)?.side ?? null : null)
       } : undefined}
       onPointerMove={interactive ? (event) => {
         if (!dragging.current) return
@@ -77,6 +130,7 @@ function PropMesh({
         if (point) {
           latestPoint.current = point
           setDragPosition(point)
+          setHoveredSide(nearestHotspot(point, hotspots)?.side ?? null)
         }
       } : undefined}
       onPointerUp={interactive ? (event) => {
@@ -89,11 +143,13 @@ function PropMesh({
         dragging.current = false
         latestPoint.current = null
         setDragPosition(null)
+        setHoveredSide(null)
       } : undefined}
       onPointerCancel={interactive ? () => {
         dragging.current = false
         latestPoint.current = null
         setDragPosition(null)
+        setHoveredSide(null)
       } : undefined}
     >
       <primitive object={object} />
@@ -123,22 +179,13 @@ function CustomizeScene({ placements, activeModel, interactive, onPlace }: Custo
   ) as Record<PropId, readonly [number, number, number]>
 
   const handleDrop = (propId: PropId, point: THREE.Vector3) => {
-    const nearest = hotspots
-      .map((hotspot) => ({
-        hotspot,
-        distance: point.distanceTo(new THREE.Vector3(...hotspot.position)),
-      }))
-      .sort((a, b) => a.distance - b.distance)[0]
-    if (nearest && nearest.distance <= 0.72) onPlace(propId, nearest.hotspot.id)
+    const target = nearestHotspot(point, hotspots)
+    if (target) onPlace(propId, target.id)
   }
 
   return (
     <>
-      <ambientLight intensity={2.1} />
-      <directionalLight position={[3, 5, 7]} intensity={4} />
-      <directionalLight position={[-4, -2, 3]} intensity={1.1} color="#ff902e" />
-      <directionalLight position={[-3, 2, -4]} intensity={2.2} color="#4d8dff" />
-      <directionalLight position={[3, 2, -4]} intensity={2.2} color="#4d8dff" />
+      <ModelEnvironment />
       {models.map((model) => {
         if (activeModel && model.id !== activeModel) return null
         const x = activeModel ? 0 : modelX[model.id]
@@ -161,7 +208,18 @@ function CustomizeScene({ placements, activeModel, interactive, onPlace }: Custo
       {props.map((prop) => {
         const placement = placements[prop.id]
         if (activeModel && placement && !placement.startsWith(activeModel)) return null
-        return <PropMesh key={prop.id} propId={prop.id} position={positions[prop.id]} interactive={interactive} onDrop={handleDrop} />
+        const placementSide = hotspots.find((hotspot) => hotspot.id === placement)?.side ?? null
+        return (
+          <PropMesh
+            key={prop.id}
+            propId={prop.id}
+            position={positions[prop.id]}
+            placementSide={placementSide}
+            hotspots={hotspots}
+            interactive={interactive}
+            onDrop={handleDrop}
+          />
+        )
       })}
     </>
   )

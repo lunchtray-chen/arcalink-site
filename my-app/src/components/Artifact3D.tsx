@@ -1,12 +1,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Edges, OrbitControls, useGLTF, useProgress, useTexture } from '@react-three/drei'
+import { Edges, Environment, OrbitControls, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Mesh } from 'three'
 import { artifactModelUrl } from '../content'
 import { useMediaQuery, useVisualTestMode } from '../hooks'
 
 const projectionUrl = '/Splash - Projected Animation on 3D model.mp4'
+const environmentUrl = '/pink_sunrise_4k.exr'
 
 type ModelNodes = {
   Cube: Mesh
@@ -19,23 +20,39 @@ function LoadingModel() {
   return <div className="model-loader" role="status">Loading model {Math.round(progress)}%</div>
 }
 
-function SplashLights() {
-  const rig = useRef<THREE.Group>(null)
+export function ModelEnvironment() {
+  const lightRig = useRef<THREE.Group>(null)
+  const keyLight = useRef<THREE.RectAreaLight>(null)
+  const rimLight = useRef<THREE.RectAreaLight>(null)
 
   useFrame(({ camera }) => {
-    if (!rig.current) return
-    rig.current.position.copy(camera.position)
-    rig.current.quaternion.copy(camera.quaternion)
+    if (!lightRig.current) return
+    lightRig.current.position.copy(camera.position)
+    lightRig.current.quaternion.copy(camera.quaternion)
+    keyLight.current?.lookAt(0, 0, 0)
+    rimLight.current?.lookAt(0, 0, 0)
   })
 
   return (
     <>
-      <ambientLight intensity={2.1} />
-      <group ref={rig}>
-        <directionalLight position={[3, 4.28, -0.4]} intensity={4} />
-        <directionalLight position={[-4, -2.72, -2.4]} intensity={1.1} color="#ff902e" />
-        <directionalLight position={[-3, 1.28, -9.4]} intensity={2.2} color="#4d8dff" />
-        <directionalLight position={[3, 1.28, -9.4]} intensity={2.2} color="#4d8dff" />
+      <Environment files={environmentUrl} background={false} environmentIntensity={2} />
+      <group ref={lightRig}>
+        <rectAreaLight
+          ref={keyLight}
+          color="#fff8f1"
+          intensity={1}
+          width={12}
+          height={9}
+          position={[0, 1, -2.5]}
+        />
+        <rectAreaLight
+          ref={rimLight}
+          color="#80afff"
+          intensity={12}
+          width={12}
+          height={9}
+          position={[6, 2, -7]}
+        />
       </group>
     </>
   )
@@ -147,7 +164,12 @@ export function ArtifactModel({ artworkUrl, modelUrl = artifactModelUrl, videoTe
 
   const additionalMeshes = useMemo(() => Object.entries(gltf.nodes)
     .filter(([name, node]) => !['Cube', '壳1', '壳2'].includes(name) && node instanceof THREE.Mesh)
-    .map(([name, node]) => ({ name, object: node.clone() })), [gltf.nodes])
+    .map(([name, node]) => {
+      const object = (node as THREE.Mesh).clone()
+      object.castShadow = true
+      object.receiveShadow = true
+      return { name, object }
+    }), [gltf.nodes])
 
   const screen = useMemo(() => {
     nodes.Cube.geometry.computeBoundingBox()
@@ -201,7 +223,7 @@ function SplashScene({
   const projectionTexture = useProjectionTexture(projectionVideo, freezeProjection)
   return (
     <>
-      <SplashLights />
+      <ModelEnvironment />
       <group scale={1.32} rotation={[0, -0.38, -0.1]} position={[0, -0.08, 0]}>
         <ArtifactModel videoTexture={projectionTexture} rotationY={keyboardYaw} />
       </group>

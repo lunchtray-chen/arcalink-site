@@ -1,5 +1,5 @@
 export type ModelId = 'ancient-stone' | 'secret-academy' | 'wanted' | 'noble-palace'
-export type HotspotSide = 'top' | 'bottom'
+export type HotspotSide = 'top' | 'bottom' | 'left' | 'right'
 export type HotspotId = `${ModelId}-${HotspotSide}`
 export type PropId = 'potion-stats' | 'character-status' | 'character-class'
 
