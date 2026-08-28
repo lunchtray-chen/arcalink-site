@@ -1,9 +1,9 @@
 import { Suspense, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
+import { useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { models, props } from '../content'
-import { ArtifactModel, ModelEnvironment } from './Artifact3D'
+import { ModelEnvironment } from './Artifact3D'
 import type { Hotspot, HotspotId, HotspotSide, ModelId, PropId, PropPlacement } from '../types'
 
 const modelX: Record<ModelId, number> = {
@@ -22,6 +22,27 @@ const hotspotLocal = {
 
 const snapRadius = 0.72
 
+function DeviceImage({ imageUrl }: { imageUrl: string }) {
+  const texture = useTexture(imageUrl)
+  texture.colorSpace = THREE.SRGBColorSpace
+  const image = texture.image as HTMLImageElement
+  const height = 2.8
+  const width = height * (image.naturalWidth / image.naturalHeight)
+
+  return (
+    <mesh position={[0, 0, 0.2]}>
+      <planeGeometry args={[width, height]} />
+      <meshBasicMaterial
+        map={texture}
+        transparent
+        alphaTest={0.01}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  )
+}
+
 function nearestHotspot(point: THREE.Vector3, hotspots: Hotspot[]) {
   const nearest = hotspots
     .map((hotspot) => ({
@@ -35,7 +56,7 @@ function nearestHotspot(point: THREE.Vector3, hotspots: Hotspot[]) {
 
 function hotspotRotation(side: HotspotSide | null): readonly [number, number, number] {
   if (side === 'bottom') return [Math.PI / 2, 0, 0]
-  if (side === 'left') return [0, 0, Math.PI / 2]
+  if (side === 'left') return [Math.PI, 0, Math.PI / 2]
   if (side === 'right') return [0, 0, -Math.PI / 2]
   return [0, 0, 0]
 }
@@ -190,8 +211,8 @@ function CustomizeScene({ placements, activeModel, interactive, onPlace }: Custo
         if (activeModel && model.id !== activeModel) return null
         const x = activeModel ? 0 : modelX[model.id]
         return (
-          <group key={model.id} position={[x, 0, 0]} scale={1.3}>
-            <ArtifactModel artworkUrl={model.artworkUrl} modelUrl={model.modelUrl} />
+          <group key={model.id} position={[x, 0, 0]}>
+            <DeviceImage imageUrl={model.imageUrl} />
           </group>
         )
       })}

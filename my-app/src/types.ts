@@ -6,8 +6,7 @@ export type PropId = 'potion-stats' | 'character-status' | 'character-class'
 export interface ModelConfig {
   id: ModelId
   label: string
-  modelUrl: string
-  artworkUrl: string
+  imageUrl: string
 }
 
 export interface PropConfig {

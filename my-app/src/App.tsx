@@ -6,11 +6,13 @@ import { useDocumentVisible, useHasApproachedViewport, useMediaQuery, useVisualT
 import type { HotspotId, PropId } from './types'
 
 import logo from './assets/logo.svg'
-import whatBackground from './assets/images/What is it - BG image.png'
-import animationBackground from './assets/images/Animation BG Image.png'
+import whatBackground from './assets/images/BG image - A miniature thats just better.webp'
+import animationBackgroundWebm from './assets/images/BG video - Animate your heros.webm'
+import animationBackgroundMp4 from './assets/images/Fallback - BG video - Animate your heros.mp4'
+import animationFallback from './assets/images/Fallback Image - Animate your heros.webp'
 import profilePicture from './assets/images/Placeholder Profile Picture.png'
 import specsDrawing from './assets/images/Specs - Decorative Side Drawing.png'
-import ctaDrawing from './assets/images/CTA - BG illustration.png'
+import ctaBackground from './assets/images/BG image - Footer.jpg'
 import nextImageIcon from './assets/Icons/Next Image Button.png'
 import previousImageIcon from './assets/Icons/Next Image Button (Left).png'
 import downArrow from './assets/Icons/Downward arrow.png'
@@ -162,7 +164,18 @@ function WhatSection() {
 function AnimationSection() {
   return (
     <section className="art-section animation-section" aria-labelledby="animation-title">
-      <img className="section-art" src={animationBackground} alt="Animated fantasy hero displayed on an Artifact Mini" loading="lazy" />
+      <video
+        className="background-video"
+        poster={animationFallback}
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      >
+        <source src={animationBackgroundWebm} type="video/webm" />
+        <source src={animationBackgroundMp4} type="video/mp4" />
+      </video>
       <div className="animation-copy">
         <h2 id="animation-title">Animate Your Heroes!</h2>
         <p>See your characters animated beautifully on twin high-resolution LCD screens, adding movement and atmosphere to your campaign.</p>
@@ -405,7 +418,7 @@ function FaqSection() {
 function CtaSection() {
   return (
     <section className="cta-section" aria-labelledby="cta-title">
-      <img src={ctaDrawing} className="cta-art" alt="Fantasy heroes gathered around an Artifact Mini" loading="lazy" />
+      <img src={ctaBackground} className="cta-art" alt="Four Artifact Mini designs arranged across a fantasy tabletop" loading="lazy" />
       <div className="section-container cta-copy">
         <h2 id="cta-title">Now on Kickstarter.</h2>
         <p>Want to see our project come to life? Back for just $5 with exclusive rewards.</p>

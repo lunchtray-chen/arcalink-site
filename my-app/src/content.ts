@@ -1,17 +1,20 @@
-import appSlide1 from './assets/images/App - Placeholder Image 1.png'
-import appSlide2 from './assets/images/App - Placeholder Image 2.png'
-import appSlide3 from './assets/images/App - Placeholder Image 3.png'
+import appSlide1 from './assets/images/How it works - 1.webp'
+import appSlide2 from './assets/images/How it works - 2.gif'
+import appSlide3 from './assets/images/How it works - 3.gif'
 import appSlide4 from './assets/images/App - Placeholder Image 4.png'
-import customizeArtwork from './assets/images/Customize - Unique Artwork Placeholder.png'
+import customizeDeviceAcademy from './assets/images/Customize Device - Academy.png'
+import customizeDevicePalace from './assets/images/Customize Device - Palace.png'
+import customizeDeviceStone from './assets/images/Customize Device - Stone.png'
+import customizeDeviceWanted from './assets/images/Customize Device - Wanted.png'
 import type { FaqItem, ModelConfig, PropConfig, Review, Slide } from './types'
 
-export const artifactModelUrl = '/Customize 3D Model - Academy.glb'
+export const artifactModelUrl = '/Customize 3D Model - Wanted.glb'
 
 export const models: ModelConfig[] = [
-  { id: 'ancient-stone', label: 'Ancient Stone', modelUrl: '/Customize 3D Model - Stone.glb', artworkUrl: customizeArtwork },
-  { id: 'secret-academy', label: 'Secret Academy', modelUrl: artifactModelUrl, artworkUrl: customizeArtwork },
-  { id: 'wanted', label: 'Wanted: Dead or Alive', modelUrl: '/Customize 3D Model - Wanted.glb', artworkUrl: customizeArtwork },
-  { id: 'noble-palace', label: 'Noble Palace', modelUrl: '/Customize 3D Model - Palace.glb', artworkUrl: customizeArtwork },
+  { id: 'ancient-stone', label: 'Ancient Stone', imageUrl: customizeDeviceStone },
+  { id: 'secret-academy', label: 'Secret Academy', imageUrl: customizeDeviceAcademy },
+  { id: 'wanted', label: 'Wanted: Dead or Alive', imageUrl: customizeDeviceWanted },
+  { id: 'noble-palace', label: 'Noble Palace', imageUrl: customizeDevicePalace },
 ]
 
 export const props: PropConfig[] = [
@@ -36,9 +39,9 @@ export const props: PropConfig[] = [
 ]
 
 export const slides: Slide[] = [
-  { src: appSlide1, alt: 'Arca Studio app preview, orange placeholder' },
-  { src: appSlide2, alt: 'Arca Studio app preview, green placeholder' },
-  { src: appSlide3, alt: 'Arca Studio app preview, blue placeholder' },
+  { src: appSlide1, alt: 'How the Artifex app works, step one' },
+  { src: appSlide2, alt: 'How the Artifex app works, step two' },
+  { src: appSlide3, alt: 'How the Artifex app works, step three' },
   { src: appSlide4, alt: 'Arca Studio app preview, pink placeholder' },
 ]
 
