@@ -14,8 +14,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@fontsource-variable/instrument-sans": "^5.3.0",
     "@fontsource/girassol": "^5.3.0",
+    "@fontsource/lato": "^5.3.0",
     "@fontsource/new-rocker": "^5.3.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.7.0",

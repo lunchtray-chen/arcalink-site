@@ -56,7 +56,7 @@ p {
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 88px;
+  height: 73px;
   background: rgba(30, 27, 27, 0.84);
   border-bottom: 1px solid rgba(255, 247, 240, 0.1);
   box-shadow: 0 8px 26px rgba(17, 13, 12, 0.16);
@@ -74,7 +74,7 @@ p {
 }
 
 .brand-logo {
-  width: 164px;
+  width: 140px;
   height: auto;
 }
 
@@ -82,6 +82,7 @@ p {
   display: flex;
   align-items: center;
   gap: 66px;
+  color: var(--accent-secondary);
   font-family: 'Girassol', serif;
   font-size: 21px;
 }
@@ -89,8 +90,8 @@ p {
 .nav-cta {
   display: inline-flex;
   align-items: center;
-  min-height: 52px;
-  padding: 0 30px;
+  min-height: 42px;
+  padding: 0 22px;
   color: #000;
   background: var(--accent-primary);
   border-radius: 10px;
@@ -102,22 +103,19 @@ p {
 
 .splash-section {
   position: relative;
-  min-height: min(calc(100vw * 0.683), 1022px);
+  min-height: min(calc(68.3vw - 30px), 992px);
   overflow: hidden;
-  background:
-    radial-gradient(circle at 72% 42%, rgba(255, 144, 46, 0.24) 0%, rgba(255, 144, 46, 0.1) 24%, transparent 52%),
-    radial-gradient(circle at 18% 72%, rgba(255, 144, 46, 0.14) 0%, rgba(255, 144, 46, 0.05) 22%, transparent 46%),
-    var(--bg-primary);
+  background: var(--bg-primary) url('./assets/images/splash image bg.png') center / cover no-repeat;
 }
 
 .splash-layout {
   position: relative;
   z-index: 5;
-  min-height: min(calc(100vw * 0.683), 1022px);
+  min-height: min(calc(68.3vw - 30px), 992px);
   display: grid;
   grid-template-columns: 46% 54%;
   align-items: center;
-  transform: translateY(-40px);
+  transform: translateY(-20px);
 }
 
 .splash-copy {
@@ -162,6 +160,30 @@ p {
   min-height: 560px;
   cursor: grab;
   touch-action: none;
+}
+
+.splash-viewer::before {
+  position: absolute;
+  z-index: 0;
+  top: 28%;
+  left: 50%;
+  width: 74%;
+  height: 55%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 175, 114, 0.289) 0%,
+    rgba(255, 123, 46, 0.067) 55%,
+    transparent 74%
+  );
+  filter: blur(30px);
+  content: '';
+  pointer-events: none;
+}
+
+.splash-viewer > canvas {
+  position: relative;
+  z-index: 1;
 }
 
 .projection-video-source {
@@ -212,14 +234,30 @@ p {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   transform: translate(-50%, -40px);
-  background: #696666;
+  background: transparent;
   cursor: pointer;
 }
 
 .scroll-cue img {
-  width: 24px;
+  width: 29px;
+  animation: scroll-cue-hover 1.8s ease-in-out infinite;
+  transition: opacity 180ms ease;
+}
+
+.scroll-cue:hover img {
+  opacity: 0.6;
+}
+
+@keyframes scroll-cue-hover {
+  0%,
+  100% {
+    transform: translateY(-5px);
+  }
+
+  50% {
+    transform: translateY(5px);
+  }
 }
 
 .art-section {
@@ -248,74 +286,91 @@ p {
 }
 
 .what-section {
-  height: min(calc(100vw * 0.774), 1158px);
-  min-height: 720px;
+  height: min(calc(77.4vw - 200px), 958px);
+  min-height: 520px;
   background: var(--bg-primary);
 }
 
 .what-copy {
   position: absolute;
   z-index: 2;
-  top: 11%;
-  right: max(var(--gutter), calc((100vw - var(--container)) / 2));
-  width: min(60%, 800px);
-  text-align: right;
+  top: calc(11% - 25px);
+  left: max(var(--gutter), calc((100vw - var(--container)) / 2));
+  width: min(80%, 1100px);
+  text-align: left;
 }
 
 .what-copy h2 {
   margin: 26px 0 18px;
   color: var(--accent-primary);
   font-size: var(--title);
+  white-space: nowrap;
 }
 
 .what-copy p:last-child {
   max-width: 680px;
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .animation-section {
-  height: min(calc(100vw * 0.721), 1082px);
-  min-height: 700px;
+  height: min(calc(72.1vw - 200px), 882px);
+  min-height: 500px;
   background: #218ef2;
+}
+
+.what-section::after,
+.animation-section::after,
+.cta-section::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    #000000c7 0%,
+    rgba(0, 0, 0, 0.689) 15%,
+    transparent 50%
+  );
+  content: '';
+  pointer-events: none;
 }
 
 .animation-copy {
   position: absolute;
   z-index: 2;
-  top: 25%;
+  top: calc(25% - 125px);
   left: max(var(--gutter), calc((100vw - var(--container)) / 2));
-  width: min(48%, 600px);
+  width: min(70%, 850px);
 }
 
 .animation-copy h2 {
   margin-bottom: 22px;
-  color: #fff;
+  color: #ff8926;
   font-size: var(--title);
+  white-space: nowrap;
 }
 
 .animation-copy p {
   max-width: 560px;
 }
 
+.customize-app-background {
+  background: var(--accent-secondary) url('./assets/images/bg gradient image.png') center / cover no-repeat;
+}
+
 .customize-section {
   min-height: min(calc(100vw * 0.688), 920px);
   padding: 84px 0 24px;
   color: #fff;
-  background: linear-gradient(
-    to bottom,
-    var(--accent-primary) 0%,
-    var(--accent-primary) 28%,
-    var(--bg-primary) 100%
-  );
+  background: transparent;
 }
 
 .customize-heading {
-  color: #000;
+  color: #fff;
   text-align: center;
 }
 
 .customize-heading h2 {
-  color: #000;
+  color: #ff902e;
   font-size: var(--title);
 }
 
@@ -372,8 +427,8 @@ p {
   display: flex;
   align-items: center;
   color: #fff;
-  background: var(--bg-primary);
-  border-bottom: 48px solid var(--bg-primary);
+  background: transparent;
+  border-bottom: 48px solid transparent;
 }
 
 .app-layout {
@@ -471,7 +526,7 @@ p {
 
 .reviews-section {
   min-height: min(calc(100vw * 0.588), 880px);
-  padding: 74px 0 40px;
+  padding: 44px 0 40px;
   overflow: hidden;
   background: var(--bg-primary);
 }
@@ -603,9 +658,9 @@ p {
 }
 
 .faq-section {
-  min-height: min(calc(100vw * 0.615), 920px);
-  padding: 48px var(--gutter) 8px;
-  background: linear-gradient(to bottom, var(--bg-primary) 30%, #7a4a29 69%, var(--accent-primary));
+  min-height: min(calc(61.5vw + 100px), 1020px);
+  padding: 48px var(--gutter) 108px;
+  background: var(--bg-primary);
 }
 
 .faq-inner {
@@ -683,7 +738,7 @@ p {
 }
 
 .more-questions h2 {
-  color: #fff;
+  color: var(--accent-primary);
 }
 
 .more-questions p {
@@ -710,7 +765,7 @@ p {
 
 .cta-section {
   position: relative;
-  min-height: min(calc(100vw * 0.825), 1234px);
+  min-height: min(calc(82.5vw - 240px), 994px);
   overflow: hidden;
   color: #fff;
   background: var(--bg-primary);
@@ -720,19 +775,22 @@ p {
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% + 100px);
   max-width: none;
   object-fit: cover;
+  transform: translateY(-100px);
 }
 
 .cta-copy {
   position: relative;
   z-index: 2;
   padding-top: 12%;
+  transform: translateY(-85px);
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
 }
 
 .cta-copy h2 {
+  color: var(--accent-primary);
   font-size: var(--title);
 }
 
@@ -744,8 +802,8 @@ p {
 
 .cta-button {
   margin-top: 30px;
-  color: #fff;
-  background: var(--bg-primary);
+  color: #000;
+  background: var(--accent-primary);
 }
 
 .site-footer {
@@ -790,7 +848,7 @@ p {
 
 @media (min-width: 1024px) {
   .splash-layout {
-    transform: translateY(-60px);
+    transform: translateY(-40px);
   }
 
   .specs-layout {
@@ -805,12 +863,12 @@ p {
   .cta-art {
     inset: -6%;
     width: 112%;
-    height: 112%;
+    height: calc(112% + 100px);
   }
 }
 
 @media (max-width: 1023px) {
-  .site-header { height: 80px; }
+  .site-header { height: 65px; }
   .main-nav { gap: 28px; }
   .splash-layout { grid-template-columns: 48% 52%; }
   .splash-viewer { min-height: 480px; }
@@ -831,14 +889,14 @@ p {
   }
 
   .site-header {
-    height: 76px;
+    height: 61px;
   }
 
-  .brand-logo { width: 132px; }
+  .brand-logo { width: 110px; }
 
   .menu-toggle {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     display: grid;
     place-content: center;
     gap: 5px;
@@ -856,7 +914,7 @@ p {
 
   .main-nav {
     position: absolute;
-    top: 76px;
+    top: 61px;
     right: 0;
     left: 0;
     display: none;
@@ -884,6 +942,7 @@ p {
   .splash-layout {
     display: flex;
     flex-direction: column;
+    transform: translateY(10px);
     text-align: center;
   }
 
@@ -908,13 +967,13 @@ p {
 
   .what-section,
   .animation-section {
-    height: 680px;
+    height: 480px;
     min-height: 0;
   }
 
   .what-section .section-art {
     object-position: 38% center;
-    opacity: 0.74;
+    opacity: 1;
   }
 
   .what-copy {
@@ -923,13 +982,16 @@ p {
     left: 20px;
     width: auto;
     padding: 20px;
-    border-radius: 14px;
-    background: rgba(51, 48, 47, 0.74);
-    backdrop-filter: blur(5px);
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
     text-align: center;
   }
 
-  .what-copy h2 { margin: 16px 0 12px; }
+  .what-copy h2 {
+    margin: 16px 0 12px;
+    white-space: normal;
+  }
 
   .animation-section .section-art { object-position: 68% center; }
 
@@ -942,7 +1004,10 @@ p {
     text-align: center;
   }
 
-  .animation-copy h2 { margin-bottom: 15px; }
+  .animation-copy h2 {
+    margin-bottom: 15px;
+    white-space: normal;
+  }
 
   .customize-section { min-height: auto; padding: 62px 0 24px; }
   .customize-heading p { margin-top: 16px; }
@@ -1016,7 +1081,7 @@ p {
   .slide-frame { aspect-ratio: 1.28; }
   .next-slide { right: 16px; }
 
-  .reviews-section { min-height: 690px; padding: 66px 0 40px; }
+  .reviews-section { min-height: 690px; padding: 36px 0 40px; }
   .reviews-heading { padding-inline: 20px; }
   .reviews-viewport { margin-top: 50px; }
   .review-card { width: 280px; height: 380px; }
@@ -1029,7 +1094,7 @@ p {
   .spec-item { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .specs-drawing { display: none; }
 
-  .faq-section { min-height: auto; padding: 52px 20px 32px; }
+  .faq-section { min-height: auto; padding: 52px 20px 132px; }
   .faq-list { margin-top: 44px; }
   .faq-item > button { min-height: 76px; padding: 20px; font-size: 17px; }
   .faq-item > button span { flex: 1; padding-left: 29px; text-align: center; }
@@ -1037,9 +1102,9 @@ p {
   .more-questions { margin-top: 58px; }
   .more-questions p { margin-top: 20px; }
 
-  .cta-section { min-height: 700px; }
+  .cta-section { min-height: 500px; }
   .cta-art { object-position: 68% center; opacity: 1; }
-  .cta-copy { padding-top: 60px; }
+  .cta-copy { padding-top: 60px; transform: none; }
   .cta-copy { text-align: center; }
   .cta-copy p { max-width: 70%; margin: 20px auto 0; }
   .cta-button { width: 70%; min-height: 56px; margin: 22px auto 0; font-size: 24px; }

@@ -1,5 +1,5 @@
-import { Suspense, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { models, props } from '../content'
@@ -96,10 +96,15 @@ function PropMesh({
   const [dragPosition, setDragPosition] = useState<THREE.Vector3 | null>(null)
   const [hoveredSide, setHoveredSide] = useState<HotspotSide | null>(null)
   const group = useRef<THREE.Group>(null)
+  const { gl } = useThree()
   const dragging = useRef(false)
   const latestPoint = useRef<THREE.Vector3 | null>(null)
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.74), [])
   const intersection = useRef(new THREE.Vector3())
+
+  useEffect(() => () => {
+    gl.domElement.style.cursor = 'default'
+  }, [gl])
 
   const projectPointer = (event: ThreeEvent<PointerEvent>) => {
     const point = event.ray.intersectPlane(dragPlane, intersection.current)
@@ -134,6 +139,13 @@ function PropMesh({
     <group
       ref={group}
       position={dragPosition ? [dragPosition.x, dragPosition.y, 0.78] : position}
+      onPointerOver={interactive ? (event) => {
+        event.stopPropagation()
+        gl.domElement.style.cursor = 'pointer'
+      } : undefined}
+      onPointerOut={interactive ? () => {
+        gl.domElement.style.cursor = 'default'
+      } : undefined}
       onPointerDown={interactive ? (event) => {
         event.stopPropagation()
         const target = event.target as unknown as { setPointerCapture: (pointerId: number) => void }
@@ -167,6 +179,7 @@ function PropMesh({
         setHoveredSide(null)
       } : undefined}
       onPointerCancel={interactive ? () => {
+        gl.domElement.style.cursor = 'default'
         dragging.current = false
         latestPoint.current = null
         setDragPosition(null)

@@ -16,6 +16,7 @@ import ctaBackground from './assets/images/BG image - Footer.jpg'
 import nextImageIcon from './assets/Icons/Next Image Button.png'
 import previousImageIcon from './assets/Icons/Next Image Button (Left).png'
 import downArrow from './assets/Icons/Downward arrow.png'
+import darkerDownArrow from './assets/Icons/Darker Downward arrow.png'
 import upArrow from './assets/Icons/Upward arrow.png'
 import discordIcon from './assets/Icons/Discord icon.png'
 import emailIcon from './assets/Icons/Email icon.png'
@@ -142,7 +143,7 @@ function SplashSection() {
         aria-label="Scroll to key features"
         onClick={() => document.getElementById('what-is-it')?.scrollIntoView({ behavior: 'smooth' })}
       >
-        <img src={downArrow} alt="" />
+        <img src={darkerDownArrow} alt="" />
       </button>
     </section>
   )
@@ -153,7 +154,6 @@ function WhatSection() {
     <section id="what-is-it" className="art-section what-section" aria-labelledby="what-title">
       <img className="section-art" src={whatBackground} alt="Two Artifact Mini devices on a fantasy game board" />
       <div className="what-copy">
-        <p className="eyebrow">Key Features</p>
         <h2 id="what-title">A Miniature That’s Just Better.</h2>
         <p>An electronic miniature that elevates face-to-face tabletop play, extending imagination through responsive visuals and sound.</p>
       </div>
@@ -453,8 +453,10 @@ function App() {
         <SplashSection />
         <WhatSection />
         <AnimationSection />
-        <CustomizeSection />
-        <AppSection />
+        <div className="customize-app-background">
+          <CustomizeSection />
+          <AppSection />
+        </div>
         <ReviewsSection />
         <SpecsSection />
         <FaqSection />
