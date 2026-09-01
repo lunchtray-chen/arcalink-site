@@ -1,9 +1,11 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF, useTexture } from '@react-three/drei'
+import { decompressFrames, parseGIF, type ParsedFrame } from 'gifuct-js'
 import * as THREE from 'three'
 import { models, props } from '../content'
 import { ModelEnvironment } from './Artifact3D'
+import loadingAnimation from '../assets/images/loading animation.gif'
 import type { Hotspot, HotspotId, HotspotSide, ModelId, PropId, PropPlacement } from '../types'
 
 const modelX: Record<ModelId, number> = {
@@ -14,10 +16,10 @@ const modelX: Record<ModelId, number> = {
 }
 
 const hotspotLocal = {
-  top: [0, 1.3, 0.62],
-  bottom: [0, -0.92, 0.62],
-  left: [-0.72, 0.64, 0.62],
-  right: [0.72, 0.64, 0.62],
+  top: [0, 1.36, 0.62],
+  bottom: [0, -0.91, 0.62],
+  left: [-0.69, 0.8, 0.62],
+  right: [0.68, 0.8, 0.62],
 } as const
 
 const snapRadius = 0.72
@@ -75,6 +77,127 @@ function visibleHotspots(activeModel: ModelId | null): Hotspot[] {
   })
 }
 
+type DecodedHotspotAnimation = {
+  frames: ParsedFrame[]
+  width: number
+  height: number
+}
+
+function DecodedHotspotMarkers({ hotspots, animation }: { hotspots: Hotspot[]; animation: DecodedHotspotAnimation }) {
+  const playback = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = animation.width
+    canvas.height = animation.height
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('Could not create the hotspot animation canvas.')
+
+    const patchCanvas = document.createElement('canvas')
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.generateMipmaps = false
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+
+    let previousFrame: ParsedFrame | null = null
+    let restoreSnapshot: ImageData | null = null
+    let frameIndex = 0
+    let elapsedMs = 0
+    let currentDelay = Math.max(animation.frames[0]?.delay ?? 100, 20)
+
+    const drawFrame = (frame: ParsedFrame) => {
+      if (previousFrame?.disposalType === 2) {
+        const { left, top, width, height } = previousFrame.dims
+        context.clearRect(left, top, width, height)
+      } else if (previousFrame?.disposalType === 3 && restoreSnapshot) {
+        context.putImageData(restoreSnapshot, 0, 0)
+      }
+
+      restoreSnapshot = frame.disposalType === 3
+        ? context.getImageData(0, 0, canvas.width, canvas.height)
+        : null
+
+      patchCanvas.width = frame.dims.width
+      patchCanvas.height = frame.dims.height
+      const patchContext = patchCanvas.getContext('2d')
+      if (!patchContext) return
+      patchContext.putImageData(
+        new ImageData(frame.patch, frame.dims.width, frame.dims.height),
+        0,
+        0,
+      )
+      context.drawImage(patchCanvas, frame.dims.left, frame.dims.top)
+      previousFrame = frame
+      texture.needsUpdate = true
+    }
+
+    if (animation.frames[0]) {
+      drawFrame(animation.frames[0])
+      frameIndex = animation.frames.length > 1 ? 1 : 0
+    }
+
+    return {
+      texture,
+      advance(deltaMs: number) {
+        elapsedMs += Math.min(deltaMs, 250)
+        let iterations = 0
+        while (elapsedMs >= currentDelay && iterations < animation.frames.length) {
+          elapsedMs -= currentDelay
+          const frame = animation.frames[frameIndex]
+          drawFrame(frame)
+          currentDelay = Math.max(frame.delay, 20)
+          frameIndex = (frameIndex + 1) % animation.frames.length
+          iterations += 1
+        }
+      },
+    }
+  }, [animation])
+
+  useEffect(() => () => playback.texture.dispose(), [playback])
+
+  useFrame((_, delta) => playback.advance(delta * 1000))
+
+  return hotspots.map((hotspot) => (
+    <mesh
+      key={hotspot.id}
+      position={[hotspot.position[0], hotspot.position[1], hotspot.position[2] + 0.02]}
+      renderOrder={1}
+    >
+      <planeGeometry args={[0.18, 0.18]} />
+      <meshBasicMaterial
+        map={playback.texture}
+        transparent
+        alphaTest={0.02}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  ))
+}
+
+function HotspotMarkers({ hotspots }: { hotspots: Hotspot[] }) {
+  const [animation, setAnimation] = useState<DecodedHotspotAnimation | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch(loadingAnimation, { signal: controller.signal })
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => {
+        const parsed = parseGIF(buffer)
+        setAnimation({
+          frames: decompressFrames(parsed, true),
+          width: parsed.lsd.width,
+          height: parsed.lsd.height,
+        })
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) console.error('Could not decode the hotspot animation.', error)
+      })
+    return () => controller.abort()
+  }, [])
+
+  return animation ? <DecodedHotspotMarkers hotspots={hotspots} animation={animation} /> : null
+}
+
 function PropMesh({
   propId,
   position,
@@ -98,6 +221,7 @@ function PropMesh({
   const group = useRef<THREE.Group>(null)
   const { gl } = useThree()
   const dragging = useRef(false)
+  const positionInitialized = useRef(false)
   const latestPoint = useRef<THREE.Vector3 | null>(null)
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.74), [])
   const intersection = useRef(new THREE.Vector3())
@@ -105,6 +229,12 @@ function PropMesh({
   useEffect(() => () => {
     gl.domElement.style.cursor = 'default'
   }, [gl])
+
+  useLayoutEffect(() => {
+    if (!group.current || positionInitialized.current) return
+    group.current.position.set(...position)
+    positionInitialized.current = true
+  }, [position])
 
   const projectPointer = (event: ThreeEvent<PointerEvent>) => {
     const point = event.ray.intersectPlane(dragPlane, intersection.current)
@@ -115,6 +245,15 @@ function PropMesh({
 
   useFrame((_, delta) => {
     if (!group.current) return
+
+    if (dragPosition) {
+      group.current.position.set(dragPosition.x, dragPosition.y, 0.78)
+    } else {
+      group.current.position.x = THREE.MathUtils.damp(group.current.position.x, position[0], 11, delta)
+      group.current.position.y = THREE.MathUtils.damp(group.current.position.y, position[1], 11, delta)
+      group.current.position.z = THREE.MathUtils.damp(group.current.position.z, position[2], 11, delta)
+    }
+
     group.current.rotation.x = THREE.MathUtils.damp(
       group.current.rotation.x,
       targetRotation[0],
@@ -138,7 +277,6 @@ function PropMesh({
   return (
     <group
       ref={group}
-      position={dragPosition ? [dragPosition.x, dragPosition.y, 0.78] : position}
       onPointerOver={interactive ? (event) => {
         event.stopPropagation()
         gl.domElement.style.cursor = 'pointer'
@@ -153,6 +291,7 @@ function PropMesh({
         dragging.current = true
         const point = projectPointer(event)
         latestPoint.current = point
+        if (point) group.current?.position.set(point.x, point.y, 0.78)
         setDragPosition(point)
         setHoveredSide(point ? nearestHotspot(point, hotspots)?.side ?? null : null)
       } : undefined}
@@ -162,6 +301,7 @@ function PropMesh({
         const point = projectPointer(event)
         if (point) {
           latestPoint.current = point
+          group.current?.position.set(point.x, point.y, 0.78)
           setDragPosition(point)
           setHoveredSide(nearestHotspot(point, hotspots)?.side ?? null)
         }
@@ -229,16 +369,7 @@ function CustomizeScene({ placements, activeModel, interactive, onPlace }: Custo
           </group>
         )
       })}
-      {hotspots.map((hotspot) => (
-        <mesh
-          key={hotspot.id}
-          position={[hotspot.position[0], hotspot.position[1], hotspot.position[2] - 0.08]}
-          renderOrder={-1}
-        >
-          <planeGeometry args={[0.16, 0.1]} />
-          <meshBasicMaterial color="#ff5e67" transparent opacity={0.72} />
-        </mesh>
-      ))}
+      <HotspotMarkers hotspots={hotspots} />
       {props.map((prop) => {
         const placement = placements[prop.id]
         if (activeModel && placement && !placement.startsWith(activeModel)) return null
@@ -269,7 +400,12 @@ export function CustomizeCanvas({ placements, activeModel, interactive, onPlace 
           camera={{ position: [0, 0, 10], zoom: activeModel ? 115 : 140 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         >
-          <CustomizeScene placements={placements} activeModel={activeModel} interactive={interactive} onPlace={onPlace} />
+          <CustomizeScene
+            placements={placements}
+            activeModel={activeModel}
+            interactive={interactive}
+            onPlace={onPlace}
+          />
         </Canvas>
       </Suspense>
     </div>

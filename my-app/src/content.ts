@@ -19,22 +19,52 @@ export const models: ModelConfig[] = [
 
 export const props: PropConfig[] = [
   {
-    id: 'potion-stats',
-    label: 'Potion stats',
-    modelUrl: '/Customize - Prop placeholder 1.glb',
-    initialHotspot: 'ancient-stone-top',
-  },
-  {
-    id: 'character-status',
-    label: 'Character status',
-    modelUrl: '/Customize - Prop placeholder 2.glb',
+    id: 'burning',
+    label: 'Burning',
+    modelUrl: '/Prop - Burning.glb',
     initialHotspot: 'secret-academy-bottom',
   },
   {
-    id: 'character-class',
-    label: 'Character class',
-    modelUrl: '/Customize - Prop placeholder 3.glb',
+    id: 'charmed',
+    label: 'Charmed',
+    modelUrl: '/Prop - Charmed.glb',
+    initialHotspot: 'noble-palace-bottom',
+  },
+  {
+    id: 'dragon',
+    label: 'Dragon',
+    modelUrl: '/Prop - Dragon.glb',
+    initialHotspot: 'secret-academy-top',
+  },
+  {
+    id: 'gauntlet',
+    label: 'Gauntlet',
+    modelUrl: '/Prop - Gauntlet.glb',
+    initialHotspot: 'noble-palace-top',
+  },
+  {
+    id: 'owl',
+    label: 'Owl',
+    modelUrl: '/Prop - Owl.glb',
+    initialHotspot: 'ancient-stone-left',
+  },
+  {
+    id: 'potion',
+    label: 'Potion',
+    modelUrl: '/Prop - Potion.glb',
+    initialHotspot: 'wanted-left',
+  },
+  {
+    id: 'spider',
+    label: 'Spider',
+    modelUrl: '/Prop - Spider.glb',
     initialHotspot: 'wanted-top',
+  },
+  {
+    id: 'staff',
+    label: 'Staff',
+    modelUrl: '/Prop - Staff.glb',
+    initialHotspot: 'ancient-stone-right',
   },
 ]
 

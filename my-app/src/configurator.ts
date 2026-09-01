@@ -15,7 +15,18 @@ export function placeProp(
   propId: PropId,
   hotspotId: HotspotId,
 ): PropPlacement {
+  const previousHotspot = placements[propId]
   const occupant = hotspotOccupant(placements, hotspotId)
-  if (occupant && occupant !== propId) return placements
+
+  if (occupant === propId) return placements
+
+  if (occupant) {
+    return {
+      ...placements,
+      [propId]: hotspotId,
+      [occupant]: previousHotspot,
+    }
+  }
+
   return { ...placements, [propId]: hotspotId }
 }

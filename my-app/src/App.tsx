@@ -195,13 +195,14 @@ function CustomizeSection() {
 
   const handlePlace = (propId: PropId, hotspotId: HotspotId) => {
     const occupant = hotspotOccupant(placements, hotspotId)
-    if (occupant && occupant !== propId) {
-      setAnnouncement('That hotspot is already occupied. The prop returned to its previous position.')
-      return false
-    }
     setPlacements((current) => placeProp(current, propId, hotspotId))
     const prop = props.find((item) => item.id === propId)!
-    setAnnouncement(`${prop.label} attached to ${hotspotId.replaceAll('-', ' ')}.`)
+    if (occupant && occupant !== propId) {
+      const displacedProp = props.find((item) => item.id === occupant)!
+      setAnnouncement(`${prop.label} exchanged places with ${displacedProp.label}.`)
+    } else {
+      setAnnouncement(`${prop.label} attached to ${hotspotId.replaceAll('-', ' ')}.`)
+    }
     return true
   }
 
@@ -316,8 +317,8 @@ function AppSection() {
     <section className="app-section" aria-labelledby="app-title">
       <div className="section-container app-layout">
         <div className="app-copy">
-          <h2 id="app-title">A Hub For<br />Imagination.</h2>
-          <p>Linked with Arca Studio, software that records, transcribes, and summarizes your campaign—so you’ll remember every twist and turn.</p>
+          <h2 id="app-title">How Does It Work?</h2>
+          <p>Simply upload your selected artwork onto our companion app, send it to a connected device, and optionally customize your device with our magnetic attachments.</p>
         </div>
         <AppSlideshow />
       </div>

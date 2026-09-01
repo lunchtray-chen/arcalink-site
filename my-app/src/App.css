@@ -394,7 +394,7 @@ p {
 
 .model-labels {
   position: absolute;
-  bottom: 27px;
+  bottom: 57px;
   left: 50%;
   width: 1280px;
   display: grid;
@@ -874,7 +874,7 @@ p {
   .splash-viewer { min-height: 480px; }
   .what-copy { width: 64%; }
   .customize-stage { height: 510px; }
-  .model-labels { bottom: 42px; font-size: 17px; }
+  .model-labels { bottom: 72px; font-size: 17px; }
   .review-card { width: 290px; height: 380px; }
   .specs-grid { gap: 28px 22px; }
   .specs-layout { grid-template-columns: 60% 40%; }
@@ -1019,7 +1019,7 @@ p {
 
   .model-labels {
     right: 20px;
-    bottom: -4px;
+    bottom: 26px;
     left: 20px;
     width: auto;
     display: block;

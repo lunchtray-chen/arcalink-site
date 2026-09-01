@@ -41,7 +41,7 @@ export function ModelEnvironment() {
           ref={keyLight}
           color="#fff8f1"
           intensity={1}
-          width={12}
+          width={3}
           height={9}
           position={[0, 1, -2.5]}
         />
