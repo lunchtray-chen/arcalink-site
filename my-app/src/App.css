@@ -411,6 +411,7 @@ p {
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
   transform: translateX(-50%);
+  color: var(--accent-secondary);
   font-family: 'Girassol', serif;
   font-size: 21px;
   text-align: center;

@@ -16,7 +16,6 @@ import ctaBackground from './assets/images/BG image - Footer.jpg'
 import nextImageIcon from './assets/Icons/Next Image Button.png'
 import previousImageIcon from './assets/Icons/Next Image Button (Left).png'
 import downArrow from './assets/Icons/Downward arrow.png'
-import darkerDownArrow from './assets/Icons/Darker Downward arrow.png'
 import upArrow from './assets/Icons/Upward arrow.png'
 import discordIcon from './assets/Icons/Discord icon.png'
 import emailIcon from './assets/Icons/Email icon.png'
@@ -143,7 +142,7 @@ function SplashSection() {
         aria-label="Scroll to key features"
         onClick={() => document.getElementById('what-is-it')?.scrollIntoView({ behavior: 'smooth' })}
       >
-        <img src={darkerDownArrow} alt="" />
+        <img src={downArrow} alt="" />
       </button>
     </section>
   )
