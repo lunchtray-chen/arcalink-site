@@ -162,7 +162,7 @@ function DecodedHotspotMarkers({ hotspots, animation }: { hotspots: Hotspot[]; a
       position={[hotspot.position[0], hotspot.position[1], hotspot.position[2] + 0.02]}
       renderOrder={1}
     >
-      <planeGeometry args={[0.18, 0.18]} />
+      <planeGeometry args={[0.3, 0.3]} />
       <meshBasicMaterial
         map={playback.texture}
         transparent
