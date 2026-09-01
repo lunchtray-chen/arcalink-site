@@ -105,9 +105,10 @@ p {
   position: relative;
   min-height: min(calc(68.3vw - 30px), 992px);
   overflow: hidden;
-  background: var(--bg-primary) url('./assets/images/splash image bg.jpg') center / cover no-repeat;
+  background: var(--bg-primary) url('./assets/images/splash image bg.png') center / cover no-repeat;
 }
 
+/**
 .splash-section::after {
   position: absolute;
   z-index: 1;
@@ -115,7 +116,7 @@ p {
   background: rgba(0, 0, 0, 0.55);
   content: '';
   pointer-events: none;
-}
+}**/
 
 .splash-layout {
   position: relative;
