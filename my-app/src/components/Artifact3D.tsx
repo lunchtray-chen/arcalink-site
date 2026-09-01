@@ -60,7 +60,6 @@ export function ModelEnvironment() {
 
 function useProjectionTexture(video: HTMLVideoElement | null, shouldPlay: boolean) {
   const [readyVideo, setReadyVideo] = useState<HTMLVideoElement | null>(null)
-  const pendingPlay = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
     if (!video) {
@@ -68,36 +67,13 @@ function useProjectionTexture(video: HTMLVideoElement | null, shouldPlay: boolea
       return
     }
 
-    let frameCallback = 0
-    let fallbackTimer = 0
-    let waitingForFrame = false
+    const markReady = () => setReadyVideo(video)
 
-    const markReady = () => {
-      window.clearTimeout(fallbackTimer)
-      setReadyVideo(video)
-    }
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) markReady()
+    else video.addEventListener('loadeddata', markReady, { once: true })
 
-    const waitForDecodedFrame = () => {
-      if (waitingForFrame) return
-      waitingForFrame = true
-      if (typeof video.requestVideoFrameCallback === 'function') {
-        frameCallback = video.requestVideoFrameCallback(markReady)
-        fallbackTimer = window.setTimeout(markReady, 500)
-      } else {
-        markReady()
-      }
-    }
-
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) waitForDecodedFrame()
-    video.addEventListener('loadeddata', waitForDecodedFrame)
-    video.addEventListener('playing', waitForDecodedFrame)
     return () => {
-      video.removeEventListener('loadeddata', waitForDecodedFrame)
-      video.removeEventListener('playing', waitForDecodedFrame)
-      window.clearTimeout(fallbackTimer)
-      if (frameCallback && typeof video.cancelVideoFrameCallback === 'function') {
-        video.cancelVideoFrameCallback(frameCallback)
-      }
+      video.removeEventListener('loadeddata', markReady)
     }
   }, [video])
 
@@ -107,7 +83,6 @@ function useProjectionTexture(video: HTMLVideoElement | null, shouldPlay: boolea
     nextTexture.colorSpace = THREE.SRGBColorSpace
     nextTexture.minFilter = THREE.LinearFilter
     nextTexture.magFilter = THREE.LinearFilter
-    nextTexture.needsUpdate = true
     return nextTexture
   }, [readyVideo, video])
 
@@ -116,88 +91,23 @@ function useProjectionTexture(video: HTMLVideoElement | null, shouldPlay: boolea
   useEffect(() => {
     if (!video) return
 
-    let disposed = false
-    let retryTimer = 0
-    let retryCount = 0
-
-    video.defaultMuted = true
-    video.muted = true
-    video.loop = true
-    video.playsInline = true
-
-    const clearRetry = () => {
-      window.clearTimeout(retryTimer)
-      retryTimer = 0
-    }
-
-    const ensurePlayback = () => {
-      if (
-        disposed
-        || !shouldPlay
-        || document.visibilityState !== 'visible'
-        || (!video.paused && !video.ended)
-        || pendingPlay.current
-      ) return
-
-      if (video.ended) video.currentTime = 0
-      const attempt = video.play()
-      pendingPlay.current = attempt
-      attempt
-        .then(() => {
-          retryCount = 0
-          clearRetry()
-        })
-        .catch((error: DOMException) => {
-          if (disposed || error.name === 'AbortError' || retryCount >= 3) return
-          retryCount += 1
-          clearRetry()
-          retryTimer = window.setTimeout(ensurePlayback, 750)
-        })
-        .finally(() => {
-          if (pendingPlay.current === attempt) pendingPlay.current = null
-        })
-    }
-
-    const pausePlayback = () => {
-      clearRetry()
-      if (!video.paused) video.pause()
+    const startPlayback = () => {
+      if (!shouldPlay || document.visibilityState !== 'visible' || !video.paused) return
+      void video.play().catch(() => {
+        // The element's native muted autoplay remains the fallback.
+      })
     }
 
     const handleVisibility = () => {
-      if (shouldPlay && document.visibilityState === 'visible') ensurePlayback()
-      else pausePlayback()
+      if (shouldPlay && document.visibilityState === 'visible') startPlayback()
+      else if (!video.paused) video.pause()
     }
 
-    const handlePageShow = () => ensurePlayback()
-    const handleRecoverablePause = () => {
-      if (!shouldPlay || document.visibilityState !== 'visible') return
-      clearRetry()
-      retryTimer = window.setTimeout(ensurePlayback, 100)
-    }
-
-    video.addEventListener('loadeddata', ensurePlayback)
-    video.addEventListener('canplay', ensurePlayback)
-    video.addEventListener('ended', handleRecoverablePause)
-    video.addEventListener('pause', handleRecoverablePause)
-    video.addEventListener('stalled', handleRecoverablePause)
-    window.addEventListener('pageshow', handlePageShow)
     document.addEventListener('visibilitychange', handleVisibility)
-
-    if (shouldPlay && document.visibilityState === 'visible') ensurePlayback()
-    else pausePlayback()
+    handleVisibility()
 
     return () => {
-      disposed = true
-      clearRetry()
-      pendingPlay.current = null
-      video.removeEventListener('loadeddata', ensurePlayback)
-      video.removeEventListener('canplay', ensurePlayback)
-      video.removeEventListener('ended', handleRecoverablePause)
-      video.removeEventListener('pause', handleRecoverablePause)
-      video.removeEventListener('stalled', handleRecoverablePause)
-      window.removeEventListener('pageshow', handlePageShow)
       document.removeEventListener('visibilitychange', handleVisibility)
-      video.pause()
     }
   }, [shouldPlay, video])
 
@@ -283,7 +193,6 @@ function SplashScene({
   keyboardYaw,
   reducedMotion,
   freezeProjection,
-  projectionInViewport,
   projectionVideo,
   interacted,
   onInteraction,
@@ -291,14 +200,13 @@ function SplashScene({
   keyboardYaw: number
   reducedMotion: boolean
   freezeProjection: boolean
-  projectionInViewport: boolean
   projectionVideo: HTMLVideoElement | null
   interacted: boolean
   onInteraction: () => void
 }) {
   const projectionTexture = useProjectionTexture(
     projectionVideo,
-    !freezeProjection && projectionInViewport,
+    !freezeProjection,
   )
   return (
     <>
@@ -386,7 +294,6 @@ export function SplashViewer() {
             keyboardYaw={keyboardYaw}
             reducedMotion={reducedMotion}
             freezeProjection={reducedMotion}
-            projectionInViewport={inViewport}
             projectionVideo={projectionVideo}
             interacted={interacted}
             onInteraction={() => setInteracted(true)}
