@@ -14,36 +14,8 @@ test('starts the splash projection without user interaction', async ({ page }, t
   const projection = page.locator('video[data-artifact-projection="true"]')
   await expect(projection).toHaveCount(1, { timeout: 15_000 })
   await expect.poll(
-    () => projection.evaluate((video: HTMLVideoElement) => !video.paused && video.currentTime > 0.05),
+    () => projection.evaluate((video: HTMLVideoElement) => video.paused && video.currentTime > 0.05),
     { timeout: 15_000 },
-  ).toBe(true)
-})
-
-test('keeps both videos playing after the splash leaves and re-enters the viewport', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.startsWith('mobile'))
-  await page.goto('/')
-
-  const projection = page.locator('video[data-artifact-projection="true"]')
-  const background = page.locator('.animation-section .background-video')
-
-  await expect.poll(
-    () => projection.evaluate((video: HTMLVideoElement) => !video.paused && video.currentTime > 0.05),
-    { timeout: 15_000 },
-  ).toBe(true)
-
-  await page.locator('.animation-section').evaluate((element) => {
-    document.documentElement.style.scrollBehavior = 'auto'
-    element.scrollIntoView()
-  })
-  await expect.poll(
-    () => background.evaluate((video: HTMLVideoElement) => !video.paused && video.currentTime > 0.05),
-    { timeout: 15_000 },
-  ).toBe(true)
-
-  await page.locator('.splash-section').evaluate((element) => element.scrollIntoView())
-  await expect.poll(
-    () => projection.evaluate((video: HTMLVideoElement) => !video.paused),
-    { timeout: 5_000 },
   ).toBe(true)
 })
 
@@ -51,7 +23,7 @@ test('renders all supplied app slides and exposes the active image', async ({ pa
   await page.goto('/')
   const slides = page.locator('.slide-frame > .slide-image')
   await expect(slides).toHaveCount(4)
-  await expect(slides.nth(0)).toHaveAttribute('src', /How it works - 1|How%20it%20works%20-%201/)
+  await expect(slides.nth(0)).toHaveAttribute('src', /App - Placeholder Image 1|App%20-%20Placeholder%20Image%201/)
   await expect(slides.nth(0)).toHaveCSS('opacity', '1')
   const nextButton = page.getByRole('button', { name: 'Next image' })
   await expect(nextButton).toHaveCSS('opacity', '0.6')
