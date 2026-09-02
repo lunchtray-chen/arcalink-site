@@ -275,61 +275,53 @@ p {
   overflow: hidden;
 }
 
-.section-art {
-  position: absolute;
-  inset: 0;
+.what-section,
+.animation-section {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  padding: clamp(64px, 6vw, 96px) clamp(20px, 13.37vw, 200px) clamp(52px, 5vw, 80px);
+  flex-direction: column;
+  gap: clamp(30px, 3.5vw, 52px);
+  background: var(--bg-primary);
+}
+
+.feature-media {
+  position: relative;
   width: 100%;
-  height: 100%;
+  height: auto;
   max-width: none;
-  object-fit: cover;
+  border-radius: 6px;
+  object-fit: contain;
 }
 
 .background-video {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   pointer-events: none;
   user-select: none;
 }
 
-.what-section {
-  height: min(calc(77.4vw - 200px), 958px);
-  min-height: 520px;
-  background: var(--bg-primary);
-}
-
-.what-copy {
-  position: absolute;
+.what-copy,
+.animation-copy {
+  position: relative;
   z-index: 2;
-  top: calc(11% - 25px);
-  left: max(var(--gutter), calc((100vw - var(--container)) / 2));
-  width: min(80%, 1100px);
-  text-align: left;
+  width: min(100%, 900px);
+  text-align: center;
 }
 
 .what-copy h2 {
-  margin: 26px 0 18px;
+  margin-bottom: 18px;
   color: var(--accent-primary);
   font-size: var(--title);
   white-space: nowrap;
 }
 
-.what-copy p:last-child {
+.what-copy p,
+.animation-copy p {
   max-width: 680px;
-  margin-left: 0;
+  margin-inline: auto;
 }
 
-.animation-section {
-  height: min(calc(72.1vw - 200px), 882px);
-  min-height: 500px;
-  background: #218ef2;
-}
-
-.what-section::after,
-.animation-section::after,
 .cta-section::after {
   position: absolute;
   z-index: 1;
@@ -344,14 +336,6 @@ p {
   pointer-events: none;
 }
 
-.animation-copy {
-  position: absolute;
-  z-index: 2;
-  top: calc(25% - 125px);
-  left: max(var(--gutter), calc((100vw - var(--container)) / 2));
-  width: min(70%, 850px);
-}
-
 .animation-copy h2 {
   margin-bottom: 22px;
   color: #ff8926;
@@ -359,12 +343,12 @@ p {
   white-space: nowrap;
 }
 
-.animation-copy p {
-  max-width: 560px;
+.what-section {
+  background: var(--accent-secondary) url('./assets/images/bg gradient image.png') center / cover no-repeat;
 }
 
 .customize-app-background {
-  background: var(--accent-secondary) url('./assets/images/bg gradient image.png') center / cover no-repeat;
+  background: var(--bg-primary);
 }
 
 .customize-section {
@@ -438,7 +422,7 @@ p {
   display: flex;
   align-items: center;
   color: #fff;
-  background: transparent;
+  background: var(--bg-primary);
   border-bottom: 48px solid transparent;
 }
 
@@ -979,41 +963,20 @@ p {
 
   .what-section,
   .animation-section {
-    height: 480px;
+    height: auto;
     min-height: 0;
+    padding: 54px 20px 40px;
+    gap: 26px;
   }
 
-  .what-section .section-art {
-    object-position: 38% center;
-    opacity: 1;
-  }
-
-  .what-copy {
-    top: 44px;
-    right: 20px;
-    left: 20px;
-    width: auto;
-    padding: 20px;
-    border-radius: 0;
-    background: transparent;
-    backdrop-filter: none;
-    text-align: center;
+  .what-copy,
+  .animation-copy {
+    width: 100%;
   }
 
   .what-copy h2 {
     margin: 16px 0 12px;
     white-space: normal;
-  }
-
-  .animation-section .section-art { object-position: 68% center; }
-
-  .animation-copy {
-    top: 48px;
-    right: 20px;
-    left: 20px;
-    width: auto;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.38);
-    text-align: center;
   }
 
   .animation-copy h2 {

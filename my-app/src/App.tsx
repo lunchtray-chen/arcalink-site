@@ -151,11 +151,11 @@ function SplashSection() {
 function WhatSection() {
   return (
     <section id="what-is-it" className="art-section what-section" aria-labelledby="what-title">
-      <img className="section-art" src={whatBackground} alt="Two Artifact Mini devices on a fantasy game board" />
       <div className="what-copy">
         <h2 id="what-title">A Miniature That’s Just Better.</h2>
         <p>An electronic miniature that elevates face-to-face tabletop play, extending imagination through responsive visuals and sound.</p>
       </div>
+      <img className="feature-media" src={whatBackground} alt="Two Artifact Mini devices on a fantasy game board" />
     </section>
   )
 }
@@ -163,8 +163,12 @@ function WhatSection() {
 function AnimationSection() {
   return (
     <section className="art-section animation-section" aria-labelledby="animation-title">
+      <div className="animation-copy">
+        <h2 id="animation-title">Animate Your Heroes!</h2>
+        <p>See your characters animated beautifully on twin high-resolution LCD screens, adding movement and atmosphere to your campaign.</p>
+      </div>
       <video
-        className="background-video"
+        className="background-video feature-media"
         poster={animationFallback}
         autoPlay
         muted
@@ -175,10 +179,6 @@ function AnimationSection() {
         <source src={animationBackgroundWebm} type="video/webm" />
         <source src={animationBackgroundMp4} type="video/mp4" />
       </video>
-      <div className="animation-copy">
-        <h2 id="animation-title">Animate Your Heroes!</h2>
-        <p>See your characters animated beautifully on twin high-resolution LCD screens, adding movement and atmosphere to your campaign.</p>
-      </div>
     </section>
   )
 }

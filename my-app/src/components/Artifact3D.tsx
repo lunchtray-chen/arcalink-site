@@ -7,7 +7,7 @@ import { artifactModelUrl } from '../content'
 import { useMediaQuery, useVisualTestMode } from '../hooks'
 
 const projectionUrl = '/Splash - Projected Animation on 3D model.mp4'
-const environmentUrl = '/pink_sunrise_4k.exr'
+const environmentUrl = '/pink-sunrise-compressed.exr'
 
 type ModelNodes = {
   Cube: Mesh
