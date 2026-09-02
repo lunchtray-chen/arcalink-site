@@ -148,37 +148,45 @@ function SplashSection() {
   )
 }
 
-function WhatSection() {
+function FeaturesSection() {
   return (
-    <section id="what-is-it" className="art-section what-section" aria-labelledby="what-title">
+    <section
+      id="what-is-it"
+      className="art-section feature-section what-section animation-section"
+      aria-labelledby="what-title animation-title"
+    >
       <div className="what-copy">
+        <p className="eyebrow">Key Features</p>
         <h2 id="what-title">A Miniature That’s Just Better.</h2>
         <p>An electronic miniature that elevates face-to-face tabletop play, extending imagination through responsive visuals and sound.</p>
       </div>
-      <img className="feature-media" src={whatBackground} alt="Two Artifact Mini devices on a fantasy game board" />
-    </section>
-  )
-}
-
-function AnimationSection() {
-  return (
-    <section className="art-section animation-section" aria-labelledby="animation-title">
-      <div className="animation-copy">
-        <h2 id="animation-title">Animate Your Heroes!</h2>
-        <p>See your characters animated beautifully on twin high-resolution LCD screens, adding movement and atmosphere to your campaign.</p>
+      <div className="feature-media-grid">
+        <div className="feature-column">
+          <img className="feature-media" src={whatBackground} alt="Two Artifact Mini devices on a fantasy game board" />
+          <div className="feature-caption">
+            <h3 className="eyebrow">Beautiful display</h3>
+            <p>See your characters animated beautifully on twin high-resolution LCD screens, adding movement and atmosphere to your campaign.</p>
+          </div>
+        </div>
+        <div className="feature-column">
+          <video
+            className="background-video feature-media"
+            poster={animationFallback}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+          >
+            <source src={animationBackgroundWebm} type="video/webm" />
+            <source src={animationBackgroundMp4} type="video/mp4" />
+          </video>
+          <div className="animation-copy feature-caption">
+            <h3 id="animation-title" className="eyebrow">Animate Your Heroes!</h3>
+            <p>See your characters animated beautifully on twin high-resolution LCD screens, adding movement and atmosphere to your campaign.</p>
+          </div>
+        </div>
       </div>
-      <video
-        className="background-video feature-media"
-        poster={animationFallback}
-        autoPlay
-        muted
-        loop
-        playsInline
-        aria-hidden="true"
-      >
-        <source src={animationBackgroundWebm} type="video/webm" />
-        <source src={animationBackgroundMp4} type="video/mp4" />
-      </video>
     </section>
   )
 }
@@ -451,8 +459,7 @@ function App() {
       <Header />
       <main>
         <SplashSection />
-        <WhatSection />
-        <AnimationSection />
+        <FeaturesSection />
         <div className="customize-app-background">
           <CustomizeSection />
           <AppSection />
