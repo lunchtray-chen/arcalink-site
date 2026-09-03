@@ -8,7 +8,9 @@ import customizeDeviceStone from './assets/images/Customize Device - Stone.png'
 import customizeDeviceWanted from './assets/images/Customize Device - Wanted.png'
 import type { FaqItem, ModelConfig, PropConfig, Review, Slide } from './types'
 
-export const artifactModelUrl = '/Customize 3D Model - Wanted.glb'
+export const publicAssetUrl = (filename: string) => `${import.meta.env.BASE_URL}${filename}`
+
+export const artifactModelUrl = publicAssetUrl('Customize 3D Model - Wanted.glb')
 
 export const models: ModelConfig[] = [
   { id: 'ancient-stone', label: 'Ancient Stone', imageUrl: customizeDeviceStone },
@@ -21,49 +23,49 @@ export const props: PropConfig[] = [
   {
     id: 'burning',
     label: 'Burning',
-    modelUrl: '/Prop - Burning.glb',
+    modelUrl: publicAssetUrl('Prop - Burning.glb'),
     initialHotspot: 'secret-academy-bottom',
   },
   {
     id: 'charmed',
     label: 'Charmed',
-    modelUrl: '/Prop - Charmed.glb',
+    modelUrl: publicAssetUrl('Prop - Charmed.glb'),
     initialHotspot: 'noble-palace-bottom',
   },
   {
     id: 'dragon',
     label: 'Dragon',
-    modelUrl: '/Prop - Dragon.glb',
+    modelUrl: publicAssetUrl('Prop - Dragon.glb'),
     initialHotspot: 'secret-academy-top',
   },
   {
     id: 'gauntlet',
     label: 'Gauntlet',
-    modelUrl: '/Prop - Gauntlet.glb',
+    modelUrl: publicAssetUrl('Prop - Gauntlet.glb'),
     initialHotspot: 'noble-palace-top',
   },
   {
     id: 'owl',
     label: 'Owl',
-    modelUrl: '/Prop - Owl.glb',
+    modelUrl: publicAssetUrl('Prop - Owl.glb'),
     initialHotspot: 'ancient-stone-left',
   },
   {
     id: 'potion',
     label: 'Potion',
-    modelUrl: '/Prop - Potion.glb',
+    modelUrl: publicAssetUrl('Prop - Potion.glb'),
     initialHotspot: 'wanted-left',
   },
   {
     id: 'spider',
     label: 'Spider',
-    modelUrl: '/Prop - Spider.glb',
+    modelUrl: publicAssetUrl('Prop - Spider.glb'),
     initialHotspot: 'wanted-top',
   },
   {
     id: 'staff',
     label: 'Staff',
-    modelUrl: '/Prop - Staff.glb',
+    modelUrl: publicAssetUrl('Prop - Staff.glb'),
     initialHotspot: 'ancient-stone-right',
   },
 ]

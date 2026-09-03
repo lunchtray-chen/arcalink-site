@@ -120,8 +120,9 @@ function DecodedHotspotMarkers({ hotspots, animation }: { hotspots: Hotspot[]; a
       patchCanvas.height = frame.dims.height
       const patchContext = patchCanvas.getContext('2d')
       if (!patchContext) return
+      const patchPixels = frame.patch as Uint8ClampedArray<ArrayBuffer>
       patchContext.putImageData(
-        new ImageData(frame.patch, frame.dims.width, frame.dims.height),
+        new ImageData(patchPixels, frame.dims.width, frame.dims.height),
         0,
         0,
       )

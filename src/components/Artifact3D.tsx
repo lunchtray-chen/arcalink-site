@@ -3,11 +3,11 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Edges, Environment, OrbitControls, useGLTF, useProgress, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Mesh } from 'three'
-import { artifactModelUrl } from '../content'
+import { artifactModelUrl, publicAssetUrl } from '../content'
 import { useMediaQuery, useVisualTestMode } from '../hooks'
 
-const projectionUrl = '/Splash - Projected Animation on 3D model.mp4'
-const environmentUrl = '/pink-sunrise-compressed.exr'
+const projectionUrl = publicAssetUrl('Splash - Projected Animation on 3D model.mp4')
+const environmentUrl = publicAssetUrl('pink-sunrise-compressed.exr')
 
 type ModelNodes = {
   Cube: Mesh
