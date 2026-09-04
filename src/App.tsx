@@ -122,7 +122,7 @@ function SplashSection() {
       <div className="section-container splash-layout">
         <div className="splash-copy">
           <p className="eyebrow">Where Tabletop Meets Technology</p>
-          <h1 id="splash-title">Test</h1>
+          <h1 id="splash-title">Artifact Mini</h1>
           <p>
             A bridge between imagination and the table. The Interactive Hub for Tabletop RPGs makes gaming more immersive and effortless, allowing stories to be seen, heard, and remembered beautifully.
           </p>
